@@ -151,4 +151,10 @@ vec3 reflect(const vec3& v, const vec3& n)
     return v - 2*dot(v,n)*n;
 }
 
+double distance_between(const vec3& u, const vec3& v)
+{
+    vec3 w = u - v;
+    return std::sqrt(w.e[0]*w.e[0] + w.e[1]*w.e[1] + w.e[2]*w.e[2]);
+}
+
 #endif

@@ -8,11 +8,11 @@ class material;
 
 struct hit_record 
 {
-    point3 p;
-    vec3 normal;
+    point3 p; // point where the ray hits the surface of the object
+    vec3 normal; // surface normal at point p
     shared_ptr<material> mat_ptr;
-    double t;
-    double u;
+    double t; // ray.at(t) returns p
+    double u; // u and v are texture coordinates, not implemented for sphere or triangle. we can probably remove
     double v;
     bool front_face;
 

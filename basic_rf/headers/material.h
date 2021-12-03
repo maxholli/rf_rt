@@ -39,6 +39,26 @@ class diffuse_light : public material
         shared_ptr<texture> emit;
 };
 
+class rf_transmit : public material 
+{
+    public:
+        rf_transmit(shared_ptr<texture> a) : emit(a) {}
+        rf_transmit(color c) : emit(make_shared<solid_color>(c)) {}
+
+        virtual bool scatter(
+            const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered
+        ) const override {
+            return false;
+        }
+
+        virtual color emitted(double u, double v, const point3& p) const override {
+            return emit->value(u, v, p);
+        }
+
+    public:
+        shared_ptr<texture> emit;
+};
+
 class lambertian : public material 
 {
     public:
@@ -82,5 +102,24 @@ class metal : public material
         color albedo;
 };
 
+// rf_universal does a perfect reflection, and attenuation is the r in color
+class rf_universal : public material 
+{
+    public:
+        rf_universal(const color& attenuation) : albedo(attenuation) {}
+
+        virtual bool scatter(
+            const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered 
+        ) const override 
+        {
+            vec3 reflected = reflect(unit_vector(r_in.direction()), rec.normal);
+            scattered = ray(rec.p, reflected);
+            attenuation = albedo;
+            return (dot(scattered.direction(), rec.normal) > 0);
+        }
+
+    public:
+        color albedo; // albedo is the proportion of incident light that is reflected by the surface.
+};
 
 #endif
