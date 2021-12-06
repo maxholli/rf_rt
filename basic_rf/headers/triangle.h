@@ -18,6 +18,7 @@ class triangle : public hittable
             }; 
 
         virtual bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override;
+        virtual bool bounding_box(double time0, double time1, aabb& output_box) const override;
 
     public:
         point3 a;
@@ -61,5 +62,23 @@ bool triangle::hit(const ray& r, double t_min, double t_max, hit_record& rec) co
     rec.p = p_hit;
     return true; 
 }
+
+bool triangle::bounding_box(double time0, double time1, aabb& output_box) const
+{
+    vec3 padding(0.0001, 0.0001, 0.0001);
+    double x_min = fmin(fmin(a.x(), b.x()), c.x());
+    double y_min = fmin(fmin(a.y(), b.y()), c.y());
+    double z_min = fmin(fmin(a.z(), b.z()), c.z());
+
+    double x_max = fmax(fmax(a.x(), b.x()), c.x());
+    double y_max = fmax(fmax(a.y(), b.y()), c.y());
+    double z_max = fmax(fmax(a.z(), b.z()), c.z());
+    
+    output_box = aabb(
+        vec3(x_min, y_min, z_min) - padding,
+        vec3(x_max, y_max, z_max) + padding);
+    return true;
+}
+
 
 #endif

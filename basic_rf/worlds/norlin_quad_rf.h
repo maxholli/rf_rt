@@ -4,8 +4,8 @@
 #include "../headers/sphere.h"
 #include "../headers/camera.h"
 #include "../headers/material.h"
-#include "../headers/aarect.h"
-#include "../headers/box.h"
+// #include "../headers/aarect.h"
+// #include "../headers/box.h"
 #include "../headers/bounce_hist.h"
 #include "../headers/triangle.h"
 
@@ -875,11 +875,22 @@ hittable_list norlin_quad_rf()
     world.add(make_shared<triangle>(point3(230.57,20.00,-6.80), point3(237.72,20.00,-17.53), point3(237.72,0.00,-17.53), material_s1));
 
 
+    hittable_list big_world;
+    big_world.add(make_shared<bvh_node>(world, 0, 1));
 
 
-    world.add(make_shared<xz_rect>(0, 580, -460, 10, 0, white));
 
-    world.add(make_shared<sphere>(point3( 400, 10, -270), 3, tx_tower));
+    // world.add(make_shared<xz_rect>(0, 580, -460, 10, 0, white));
 
-    return world;
+    point3 a = point3(0, 0, 10);
+    point3 b = point3(580, 0, 10);
+    point3 c = point3(0, 0, -460);
+    big_world.add(make_shared<triangle>(c, b, a, white));
+    a = point3(580, 0, -460);
+    big_world.add(make_shared<triangle>(c, b, a, white));
+
+
+    big_world.add(make_shared<sphere>(point3( 400, 10, -270), 3, tx_tower));
+
+    return big_world;
 }

@@ -4,8 +4,8 @@
 #include "../headers/sphere.h"
 #include "../headers/camera.h"
 #include "../headers/material.h"
-#include "../headers/aarect.h"
-#include "../headers/box.h"
+// #include "../headers/aarect.h"
+// #include "../headers/box.h"
 #include "../headers/bounce_hist.h"
 #include "../headers/triangle.h"
 

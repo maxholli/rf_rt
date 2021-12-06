@@ -5,21 +5,30 @@
 #include "headers/sphere.h"
 #include "headers/camera.h"
 #include "headers/material.h"
-#include "headers/aarect.h"
-#include "headers/box.h"
+// #include "headers/aarect.h"
+// #include "headers/box.h"
 #include "headers/bounce_hist.h"
 #include "headers/triangle.h"
 #include "headers/isotropic_antenna.h"
+#include "headers/aabb.h"
+#include "headers/bvh.h"
 
 #include "worlds/norlin_quad.h"
 #include "worlds/norlin_quad_rf.h"
 #include "worlds/floating_square.h"
 #include "worlds/floating_triangle.h"
-#include "worlds/cornell_box.h"
+// #include "worlds/cornell_box.h"
 #include "worlds/three_marbles_worship.h"
 
 #include <iostream>
 #include <string>
+#include <chrono>
+#include <sys/time.h>
+#include <ctime>
+
+using std::chrono::duration_cast;
+using std::chrono::milliseconds;
+using std::chrono::system_clock;
 // #include <stdlib.h>
 // #include <time.h>
 
@@ -156,7 +165,7 @@ int main()
             num_rf_rays = 500;
             break;
         case 1:
-            world = cornell_box();
+            // world = cornell_box();
             aspect_ratio = 1.0;
             image_width = 600;
             image_height = static_cast<int>(image_width / aspect_ratio);
@@ -197,9 +206,9 @@ int main()
         case 4:
             world = norlin_quad();
             aspect_ratio = 16.0 / 9.0;
-            image_width = 700;
+            image_width = 500;
             image_height = static_cast<int>(image_width / aspect_ratio);
-            samples_per_pixel = 35;
+            samples_per_pixel = 10;
             
             // overhead view from south
             background = color(176.0/256, 203.0/256, 247.0/256);
@@ -289,6 +298,7 @@ int main()
         camera cam(lookfrom, lookat, vec3(0,1,0), vfov, aspect_ratio);
         // Render
         std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+        auto millisec_start = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
         for (int j = image_height-1; j >= 0; --j)
         {
             std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
@@ -332,7 +342,12 @@ int main()
             }
             // std::cout << '\n';
         }
-        std::cerr << "\nDone.\n";
+        auto millisec_stop = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+        std::cerr << "\nDone.\nRays shot = "
+                    << image_height * image_width * samples_per_pixel
+                    << "\nDuration in ms = "
+                    << millisec_stop - millisec_start 
+                    << std::endl;
     } // end -> if (render_image) 
 
 
