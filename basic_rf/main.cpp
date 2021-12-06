@@ -9,8 +9,10 @@
 #include "headers/box.h"
 #include "headers/bounce_hist.h"
 #include "headers/triangle.h"
+#include "headers/isotropic_antenna.h"
 
 #include "worlds/norlin_quad.h"
+#include "worlds/norlin_quad_rf.h"
 #include "worlds/floating_square.h"
 #include "worlds/floating_triangle.h"
 #include "worlds/cornell_box.h"
@@ -124,11 +126,14 @@ int main()
     int image_height = static_cast<int>(image_width / aspect_ratio);
     int samples_per_pixel = 100;
     const int max_depth = 10;
+    int num_rf_rays = 10000;
     // World
     hittable_list world;
     point3 lookfrom;
     point3 lookat;
+    point3 antenna_lookfrom;
     double vfov;
+    double r_width = 1.0;
     
 
     color background = color(0.70, 0.80, 1.00); // default light blue
@@ -139,13 +144,16 @@ int main()
         case 0:
             world = three_marbles_worship();
             aspect_ratio = 16.0 / 9.0;
-            image_width = 50;
+            image_width = 400;
             image_height = static_cast<int>(image_width / aspect_ratio);
-            samples_per_pixel = 1;
+            samples_per_pixel = 50;
             background = color(0, 0, 0);
             lookfrom = point3(-0.5,2,2);
             lookat = point3(0,0,-1);
             vfov = 90.0;
+
+            antenna_lookfrom = lookfrom;
+            num_rf_rays = 500;
             break;
         case 1:
             world = cornell_box();
@@ -157,6 +165,8 @@ int main()
             lookfrom = point3(278, 278, -800);
             lookat = point3(278, 278, 0);
             vfov = 40.0;
+            antenna_lookfrom = lookfrom;
+            num_rf_rays = 10000;
             break;
         case 2:
             world = floating_square();
@@ -168,6 +178,8 @@ int main()
             lookfrom = point3(0,2,2);
             lookat = point3(0,2,-1);
             vfov = 90.0;
+            antenna_lookfrom = lookfrom;
+            num_rf_rays = 10000;
             break;
         case 3:
             world = floating_triangle();
@@ -179,75 +191,150 @@ int main()
             lookfrom = point3(0,2,2);
             lookat = point3(0,2,-2);
             vfov = 90.0;
+            antenna_lookfrom = lookfrom;
+            num_rf_rays = 10000;
             break;
         case 4:
             world = norlin_quad();
             aspect_ratio = 16.0 / 9.0;
-            image_width = 300;
+            image_width = 700;
             image_height = static_cast<int>(image_width / aspect_ratio);
-            samples_per_pixel = 1;
-            // background = color(0.70, 0.80, 1.00);
-            // 176, 203, 247
+            samples_per_pixel = 35;
+            
+            // overhead view from south
             background = color(176.0/256, 203.0/256, 247.0/256);
             lookfrom = point3(290,300,50);
             lookat = point3(290,15,-135);
             vfov = 56.0;
+
+            // rx looking down norlin quad
+            // background = color(0, 0, 0);
+            // lookfrom = point3(140,10,-260);
+            // lookat = point3(300,10,-260);
+            // vfov = 90.0;
+            
+            antenna_lookfrom = lookfrom;
+            num_rf_rays = 1000000;
+            r_width = 2.0;
             break;
     }
 
 
     bool render_image = true;
+    bool do_rf_model = false;
     bool print_ray_history = false;
-    // camera
-    camera cam(lookfrom, lookat, vec3(0,1,0), vfov, aspect_ratio);
-    // Render
-    if (render_image)
-        std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-    for (int j = image_height-1; j >= 0; --j)
+    
+    if (do_rf_model)
     {
-        if (render_image)
-            std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
-        for (int i = 0; i < image_width; ++i)
+        // antenna
+        iso_antenna antenna(antenna_lookfrom);
+        // model
+        for (int i = 0; i < num_rf_rays; i++)
         {
+            if (i % 10000 == 0)  
+                std::cerr << "\rRays remaining: " << num_rf_rays - i << ' ' << std::flush;
             color pixel_color(0,0,0);
-            for (int s=0; s < samples_per_pixel; s++)
-            {
-                // auto u = (i+random_double(0,0.01)) / (image_width-1);
-                // auto v = (j+random_double(0,0.01)) / (image_height-1);
-                auto u = (i+random_double(0,0.99)) / (image_width-1);
-                auto v = (j+random_double(0,0.99)) / (image_height-1);
-                ray r = cam.get_ray(u, v);
-                bounce_hist ray_history;
-                
-                pixel_color += ray_color(r, background, world, max_depth, &ray_history);
+            // do another for loop here for samples per pixel
+            ray r = antenna.get_ray();
+            if (r.dir.y() > 0.05 || r.dir.y() < -0.05)
+                continue;
 
-                if (print_ray_history) {  
-                    if (ray_history.hit_points.size() > 0)
-                    {
-                        if (ray_history.hit_points.at(ray_history.hit_points.size()-1).is_source == true)
-                        {  
-                            point_bool camera_loc;
-                            camera_loc.hit = lookfrom;
-                            camera_loc.is_source = false;
-                            std::vector<point_bool>::iterator it;
-                            it = ray_history.hit_points.begin();
-                            ray_history.hit_points.insert(it, camera_loc);
-                            for (const auto& hit_point : ray_history.hit_points)
-                            {
-                                std::cout << " hit p = " << hit_point.hit << " source? = " << hit_point.is_source << " " << std::endl;
-                            }                
-                            std::cout << "path length = " << path_length(ray_history) << '\n' << std::endl;
-                        }
-                    } 
+            bounce_hist ray_history;
+
+            pixel_color += ray_color(r, background, world, max_depth, &ray_history);
+
+            if (print_ray_history) {  
+                if (ray_history.hit_points.size() > 0)
+                {
+                    if (ray_history.hit_points.at(ray_history.hit_points.size()-1).is_source == true)
+                    {  
+                        point_bool camera_loc;
+                        camera_loc.hit = lookfrom;
+                        camera_loc.is_source = false;
+                        std::vector<point_bool>::iterator it;
+                        it = ray_history.hit_points.begin();
+                        ray_history.hit_points.insert(it, camera_loc);
+                        // for (const auto& hit_point : ray_history.hit_points) 
+                        // {
+                        //     std::cout << " hit p = " << hit_point.hit << " source? = " << hit_point.is_source << " " << std::endl;
+                        // }
+                        int num_points_in_path = static_cast<int>(ray_history.hit_points.size());
+                        for (int r_i = 0; r_i < num_points_in_path-1; r_i++)
+                        {
+                            // std::cout << " hit p = " << ray_history.hit_points[r_i].hit << " source? = " << ray_history.hit_points[r_i].is_source << " " << std::endl;
+                            vec3 y_adj(0,r_width/2.0,0);
+                            // world.add(make_shared<triangle>(point3(230.57,20.00,-6.80), point3(237.72,20.00,-17.53), point3(237.72,0.00,-17.53), material_s1));
+                            std::cout << "world.add(make_shared<triangle>(point3(" << ray_history.hit_points[r_i].hit - y_adj 
+                                        << "), point3(" << ray_history.hit_points[r_i+1].hit - y_adj 
+                                        << "), point3(" << ray_history.hit_points[r_i].hit + y_adj
+                                        << "), material_s2));" << std::endl;
+                            std::cout << "world.add(make_shared<triangle>(point3(" << ray_history.hit_points[r_i].hit + y_adj 
+                                        << "), point3(" << ray_history.hit_points[r_i+1].hit + y_adj 
+                                        << "), point3(" << ray_history.hit_points[r_i+1].hit - y_adj
+                                        << "), material_s2));" << std::endl;
+                        
+                        }             
+                        // std::cout << "path length = " << path_length(ray_history) << '\n' << std::endl;
+                    }
+                } 
+            }
+        }
+        std::cerr << "\nDone.\n";
+    }
+
+
+    if (render_image)
+    {
+        // camera
+        camera cam(lookfrom, lookat, vec3(0,1,0), vfov, aspect_ratio);
+        // Render
+        std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+        for (int j = image_height-1; j >= 0; --j)
+        {
+            std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+            for (int i = 0; i < image_width; ++i)
+            {
+                color pixel_color(0,0,0);
+                for (int s=0; s < samples_per_pixel; s++)
+                {
+                    // auto u = (i+random_double(0,0.01)) / (image_width-1);
+                    // auto v = (j+random_double(0,0.01)) / (image_height-1);
+                    auto u = (i+random_double(0,0.99)) / (image_width-1);
+                    auto v = (j+random_double(0,0.99)) / (image_height-1);
+                    ray r = cam.get_ray(u, v);
+                    bounce_hist ray_history;
+                    
+                    pixel_color += ray_color(r, background, world, max_depth, &ray_history);
+
+                    if (print_ray_history) {  
+                        if (ray_history.hit_points.size() > 0)
+                        {
+                            if (ray_history.hit_points.at(ray_history.hit_points.size()-1).is_source == true)
+                            {  
+                                point_bool camera_loc;
+                                camera_loc.hit = lookfrom;
+                                camera_loc.is_source = false;
+                                std::vector<point_bool>::iterator it;
+                                it = ray_history.hit_points.begin();
+                                ray_history.hit_points.insert(it, camera_loc);
+                                for (const auto& hit_point : ray_history.hit_points)
+                                {
+                                    std::cout << " hit p = " << hit_point.hit << " source? = " << hit_point.is_source << " " << std::endl;
+                                }                
+                                std::cout << "path length = " << path_length(ray_history) << '\n' << std::endl;
+                            }
+                        } 
+                    }
+                    // std::cout << "||";        
                 }
-                // std::cout << "||";        
+                // std::cout << '\n';
+                write_color(std::cout, pixel_color, samples_per_pixel);
             }
             // std::cout << '\n';
-            if (render_image)
-                write_color(std::cout, pixel_color, samples_per_pixel);
         }
-        // std::cout << '\n';
-    }
-    if (render_image)
         std::cerr << "\nDone.\n";
+    } // end -> if (render_image) 
+
+
+
 }
