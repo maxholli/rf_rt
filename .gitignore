@@ -34,3 +34,4 @@
 basic_graphic/output_images/*
 basic_rf/output_images/*
 OneWeekendGPU/build/*
+OneWeekendGPU/models/*

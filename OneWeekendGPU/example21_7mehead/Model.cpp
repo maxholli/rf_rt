@@ -132,17 +132,13 @@ namespace osc {
                     addVertex(mesh, attributes, idx1, knownVertices),
                     addVertex(mesh, attributes, idx2, knownVertices));
           mesh->index.push_back(idx);
-          mesh->diffuse = (const vec3f&)materials[materialID].diffuse;
-          if (faceID == 774 || faceID == 775)
-          {
-            mesh->diffuse = vec3f(230.f/255.f, 226.f/255.f, 218.f/255.f);
-            mesh->material = vec3f(0.f,0.7f,0.0f);
-          }
-          else
-          {
-            mesh->diffuse = vec3f(65.f/255.f, 40.f/255.f, 125.f/255.f);
-            mesh->material = vec3f(2.f,0.8f,0.0f);
-          }
+          mesh->diffuse = (const vec3f&)materials[materialID].ambient;
+          mesh->material = vec3f((float)materials[materialID].shininess,(float)materials[materialID].diffuse[0],0.0f);
+          // std::cout << "shininess is : " << (float)materials[materialID].shininess << std::endl;
+          // mesh->diffuse = gdt::randomColor(materialID);
+          // faceID is the triangle
+          // matrialID is the usemtl associated with a object
+          // shapeID is clustering of triangles in the obj file 
           std::cout << faceID << std::endl;
         }
 

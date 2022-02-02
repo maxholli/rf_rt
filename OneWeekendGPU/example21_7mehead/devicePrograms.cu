@@ -187,23 +187,25 @@ namespace osc {
     const vec3f &A     = sbtData.vertex[index.x];
     const vec3f &B     = sbtData.vertex[index.y];
     const vec3f &C     = sbtData.vertex[index.z];
-    const vec3f Ng     = -1.0f * normalize(cross(B-A,C-A));
-    // const vec3f Ng     = normalize(cross(B-A,C-A));
+    vec3f Ng     = normalize(cross(B-A,C-A));
 
-    // const vec3f hit_point = 
     const vec3f rayOrig = optixGetWorldRayOrigin();
     const vec3f rayDir = optixGetWorldRayDirection();
+
+    // we always want the normal pointing against the incoming ray.
+    if (dot(rayDir, Ng) > 0.0) 
+      Ng = Ng * -1.f;    
 
     const float D = -1.0f*Ng.x*A.x - Ng.y*A.y - Ng.z*A.z;
 
     const float denom = dot(rayDir, Ng);
-    const float cosDN  = 0.2f + .8f*fabsf(denom);
+    // const float cosDN  = 0.2f + .8f*fabsf(denom);
     const float t = -1.0f * (dot(Ng, rayOrig) + D) / denom;
 
     // location of the hit 
     const vec3f p_hit = rayOrig + rayDir * t;
     vec3f &prd_hit_p = *(vec3f*)getPRD23<vec3f>();
-    prd_hit_p = p_hit + (Ng * 0.001f);
+    prd_hit_p = p_hit + (Ng * 0.01f);
 
     const vec3f material = sbtData.material;
 
@@ -271,13 +273,13 @@ namespace osc {
     else if (material.x == 3.0)
     {
       //------------- light source --------------
-      prd_hit_p = vec3f(999999.99f,999999.99f,999999.99f);
+      prd_hit_p = vec3f(9999999.999f,999999.99f,999999.99f);
       //-----------------------------------
     }
 
     vec3f &prd = *(vec3f*)getPRD01<vec3f>();
-    // prd = sbtData.color;
-    prd = cosDN * sbtData.color;
+    prd = sbtData.color;
+    // prd = cosDN * sbtData.color;
     
   }
   
@@ -299,7 +301,7 @@ namespace osc {
     vec3f &prd = *(vec3f*)getPRD01<vec3f>();
     vec3f &prd_hit_p = *(vec3f*)getPRD23<vec3f>();
     // fake value for hit point, so I know to end the ray bouncing
-    prd_hit_p = vec3f(999999.99f,999999.99f,999999.99f);
+    prd_hit_p = vec3f(9999999.999f,999999.99f,999999.99f);
 
     // rayDir should be normalized becasue that happens in raygen__renderFrame()
     const vec3f rayDir = optixGetWorldRayDirection();
@@ -309,7 +311,7 @@ namespace osc {
     const float tin = 1.0 - t;
     //(1.0-t)*vec3f(1.f) +
     //sky that fades to white
-    prd = tin*vec3f(1.f,1.f,1.f) + t*vec3f(0.5f,0.7f,1.0f);
+    prd = tin*vec3f(0.8f,0.9f,1.f) + t*vec3f(0.5f,0.7f,1.0f);
     // sky that's solid light blue
     // prd = vec3f(0.5f,0.7f,1.0f);
     // background black
@@ -343,7 +345,7 @@ namespace osc {
     // normalized screen plane position, in [0,1]^2
     vec2f screen = vec2f(0.f);
     
-    const int samples_per_pixel = 20;
+    const int samples_per_pixel = 100;
 
     float r = 0.0;
     float g = 0.0;
@@ -392,7 +394,7 @@ namespace osc {
         temp_r *= rayColorPRD.x;
         temp_g *= rayColorPRD.y;
         temp_b *= rayColorPRD.z;
-        if (ray_hit_p.x == 999999.99f)
+        if (ray_hit_p.x == 9999999.999f)
           break;
         bounces++;
       }
