@@ -79,6 +79,10 @@ def find_concave_convex(meter_v_array):
 def cross2d(u, v):
     return u[1] * v[0] - u[0] * v[1]
 
+
+## a list of the coordinates
+## starting and ending point must be different
+## [np.array([x,y]), np.array([x,y]), ...] must be of this form so that + - * opperations can be performed
 def find_first_concave(meter_v_array):
     A = np.zeros(2)
     B = np.zeros(2)
@@ -139,7 +143,8 @@ def find_first_concave(meter_v_array):
                 tester1 = cross2d(B - A, p_hit - A) # WARNING: ABC need to be clockwise
                 tester2 = cross2d(C - B, p_hit - B)
                 tester3 = cross2d(A - C, p_hit - C)
-                if (tester1 >= 0 and tester2 >= 0) and tester3 >= 0:
+                # print("the testers are: ",tester1,tester2,tester3)
+                if (tester1 > 0 and tester2 > 0) and tester3 > 0:
                     v_inside = True
                     break
             

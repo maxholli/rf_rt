@@ -139,7 +139,7 @@ namespace osc {
           // faceID is the triangle
           // matrialID is the usemtl associated with a object
           // shapeID is clustering of triangles in the obj file 
-          std::cout << faceID << std::endl;
+          // std::cout << faceID << std::endl;
         }
 
         if (mesh->vertex.empty())

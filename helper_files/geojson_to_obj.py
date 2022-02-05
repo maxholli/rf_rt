@@ -22,6 +22,7 @@ building_high = 15
 
 add_ground = True
 add_roofs = True
+add_sun = True
 
 def main():
     parser = argparse.ArgumentParser(description="geojson dataset please")
@@ -68,7 +69,6 @@ def main():
     a_vertex_degrees = np.array(vertex_degrees, dtype=object)
     lower_left = np.array([a_vertex_degrees[0][0][0], a_vertex_degrees[0][0][1]])
     upper_right = np.array([a_vertex_degrees[0][0][0], a_vertex_degrees[0][0][1]])
-    points_to_average = 0
     # # find geographic center
     for i in range(len(a_vertex_degrees)):
         for j in range(len(a_vertex_degrees[i])):
@@ -83,6 +83,8 @@ def main():
     print("lower left is {}".format(lower_left))
     print("upper right is {}".format(upper_right))
 
+    print("num buildings to write: {}".format(len(a_vertex_degrees)))
+    print("total number of objects: {}".format(a_vertex_degrees.size))
     geo_center = np.zeros(2)
     geo_center[0] = (lower_left[0] + upper_right[0]) / 2.0
     geo_center[1] = (lower_left[1] + upper_right[1]) / 2.0
@@ -180,6 +182,8 @@ def main():
             f.write(item)
             f.write('\n')
         bc += 1
+        if bc % 1000 == 0:
+            print("{} buildings written\r".format(bc), end='')
 
     # # +y is coming out of the screen towards you
     #                        x 
@@ -216,6 +220,17 @@ def main():
         f.write("usemtl ground\n")
         f.write("f {} {} {}\n".format(vc-3, vc, vc-2))
         f.write("f {} {} {}\n".format(vc-3, vc-1, vc))
+    if add_sun:
+        meter_upper_right = (upper_right-lower_left) * np.array([long_deg, lat_deg])
+        f.write("v {:.4f} 2000.0 0.0\n".format(meter_upper_right[1]/2.8 - 1200))
+        f.write("v {:.4f} 2000.0 0.0\n".format(meter_upper_right[1]/2.8))
+        f.write("v {:.4f} 3200.0 0.0\n".format(meter_upper_right[1]/2.8 - 1200))
+        f.write("v {:.4f} 3200.0 0.0\n".format(meter_upper_right[1]/2.8))
+        vc += 4
+        f.write("g ground\n")
+        f.write("usemtl sun\n")
+        f.write("f {} {} {}\n".format(vc-3, vc-1, vc-2))
+        f.write("f {} {} {}\n".format(vc-2, vc-1, vc))
     f.close
 
     print("{} written out.\n{} is the geographic center.".format(args.output, (geo_center - lower_left) * np.array([long_deg, lat_deg])))

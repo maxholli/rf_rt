@@ -122,21 +122,27 @@ namespace osc {
       // on linux, common practice is to have ONE level of build dir
       // (say, <project>/build/)...
       // "../models/sponza.obj"
-      "../models/norlin.obj"
+      "../models/roof01.obj"
 #endif
                              );
       // standard
-      // Camera camera = { /*from*/vec3f(-375.f, 325.0f, model->bounds.center().z),
-      //                   /* at */vec3f(model->bounds.center().x-40.f, model->bounds.center().y, model->bounds.center().z),
-      //                   /* up */vec3f(0.f,1.f,0.f) };
+      Camera camera = { /*from*/vec3f(-375.f, 325.0f, model->bounds.center().z),
+                        /* at */vec3f(model->bounds.center().x-40.f, model->bounds.center().y, model->bounds.center().z),
+                        /* up */vec3f(0.f,1.f,0.f) };
       // centered over Boulder City
       // Camera camera = { /*from*/vec3f(-375.f, 325.0f, model->bounds.center().z),
       //                   /* at */vec3f(model->bounds.center().x-7000.f, model->bounds.center().y, model->bounds.center().z+7000.f),
       //                   /* up */vec3f(0.f,1.f,0.f) };
       //
-      Camera camera = { /*from*/vec3f(model->bounds.center().x-11000.f, 1000.0f, model->bounds.center().z+7000.f),
-                        /* at */vec3f(model->bounds.center().x-9000.f, model->bounds.center().y, model->bounds.center().z+7000.f),
-                        /* up */vec3f(0.f,1.f,0.f) };
+      // Camera camera = { /*from*/vec3f(model->bounds.center().x-11000.f, 1000.0f, model->bounds.center().z+7000.f),
+      //                   /* at */vec3f(model->bounds.center().x-9000.f, 10.f, model->bounds.center().z+7000.f),
+      //                   /* up */vec3f(0.f,1.f,0.f) };
+      // Camera camera = { /*from*/vec3f(model->bounds.center().x-9500.f, 400.0f, model->bounds.center().z+7000.f),
+      //                   /* at */vec3f(model->bounds.center().x-9000.f, 10.f, model->bounds.center().z+7000.f),
+      //                   /* up */vec3f(0.f,1.f,0.f) };
+      // Camera camera = { /*from*/vec3f(model->bounds.center().x-11000.f, 3000.0f, model->bounds.center().z+7000.f),
+      //                   /* at */vec3f(model->bounds.center().x-9000.f, 10.f, model->bounds.center().z+7000.f),
+      //                   /* up */vec3f(0.f,1.f,0.f) };
       // Camera camera = { /*from*/vec3f(10.f, 5.0f, 0.f),
       //                   /* at */vec3f(model->bounds.center().x-20.f, model->bounds.center().y, model->bounds.center().z),
       //                   /* up */vec3f(0.f,1.f,0.f) };

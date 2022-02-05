@@ -308,6 +308,10 @@ namespace osc {
     // const vec3f n_rayDir = normalize(rayDir);
 
     const float t = 0.5*(rayDir.y + 1.0);
+    // const float t = 0.5*(rayDir.z + 1.0);
+    // float t = 1.1*rayDir.z - 0.1;
+    // if (rayDir.z < 0.5)
+    //   t = 0.3*(rayDir.z + 1.0);
     const float tin = 1.0 - t;
     //(1.0-t)*vec3f(1.f) +
     //sky that fades to white
@@ -316,6 +320,8 @@ namespace osc {
     // prd = vec3f(0.5f,0.7f,1.0f);
     // background black
     // prd = vec3f(0.f);
+    // sunset sky
+    // prd = tin*vec3f(0.61f,0.24f,0.01f) + t*vec3f(0.005f,0.005f,0.005f);
   }
 
   //------------------------------------------------------------------------------
@@ -345,7 +351,7 @@ namespace osc {
     // normalized screen plane position, in [0,1]^2
     vec2f screen = vec2f(0.f);
     
-    const int samples_per_pixel = 100;
+    const int samples_per_pixel = 70;
 
     float r = 0.0;
     float g = 0.0;
@@ -367,7 +373,7 @@ namespace osc {
       
       ray_hit_p = camera.position;
 
-      int max_ray_depth = 50;
+      int max_ray_depth = 40;
       int bounces = 0;
 
       float temp_r = 1.0;
