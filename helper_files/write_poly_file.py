@@ -2,7 +2,7 @@ from triangulate_roofs import find_first_concave
 
 ## bab is bad acting building (aka building with holes)
 def write_poly_file(bab, file_name, path):
-    f = open(path+file_name, 'w')
+    f = open(path+file_name+".poly", 'w')
     walls_count = 0
     doubles = []
     for i in range(len(bab)):
@@ -40,8 +40,56 @@ def write_poly_file(bab, file_name, path):
         for j in range(1,len(sendoff)+1):
             rev_sendoff.append(sendoff[len(sendoff)-j])
         a = find_first_concave(rev_sendoff)
+        if a is None:
+            return 0
         if a == len(rev_sendoff) - 1:
             f.write("{} {} {}\n".format(i, (rev_sendoff[0][0] + rev_sendoff[a-1][0])/2, (rev_sendoff[0][1] + rev_sendoff[a-1][1])/2))
         else:
             f.write("{} {} {}\n".format(i, (rev_sendoff[a+1][0] + rev_sendoff[a-1][0])/2, (rev_sendoff[a+1][1] + rev_sendoff[a-1][1])/2))
     f.close()
+    return 1
+
+## vc is vertex count
+def read_ele_node(vc, building_high, file_name, path):
+    return_ar = [[],[],[]] # will hold [[verts],[faces],[vc]]
+
+    filename = path+file_name+".1.node"
+    f = open(filename, 'r')
+    line_num = 0
+    points_num = 0
+    while True:
+        line = f.readline()
+        if line == '':
+            break
+        else:
+            if line_num == 0:
+                points_num = int(line.split()[0])
+                return_ar[2].append(points_num+vc)
+            else:
+                verts = line.split()
+    #             print(verts)
+                if verts[0] != '#':
+                    out_str = "v {} {} {}".format( verts[2], building_high, verts[1])
+                    return_ar[0].append(out_str)
+            line_num += 1        
+    f.close()
+    filename = path+file_name+".1.ele"
+    f = open(filename, 'r')
+    line_num = 0
+    faces_num = 0
+    while True:
+        line = f.readline()
+        if line == '':
+            break
+        else:
+            if line_num == 0:
+                faces_num = int(line.split()[0])
+            else:
+                tri = line.split()
+    #             print(verts)
+                if tri[0] != '#':
+                    out_str = "f {} {} {}".format(vc+int(tri[1]), vc+int(tri[2]), vc+int(tri[3]))
+                    return_ar[1].append(out_str)
+            line_num += 1        
+    f.close()
+    return return_ar

@@ -4,7 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from triangulate_roofs import find_first_concave
 from write_poly_file import write_poly_file
+from write_poly_file import read_ele_node
 from copy import copy
+import os
 
 # # # shape files have two parts. Geometry and Records
 # Geometry is as the following:
@@ -43,12 +45,24 @@ path = "/home/cc/Workspace/holey_Bs/"
 # select_buildings = [319954] # problem building
 # select_buildings = [284485] # two holes
 # select_buildings = [231654] # four holes
-# select_buildings = [319202] # weird
+# select_buildings = [319202] # rose medical complex
+select_buildings = [840098] # problem building
 # holy buildings
-select_buildings = [156852, 299306, 319304, 319954,316380,239426,255906,123053,158249,
-                    149342,180685,123132,320550,313201,319202,296022,280282,152240,266762,
-                    291977,284485,301222,313196,128674,281599,319202,309683,291103,298691,
-                    263865,324028,249842,231654,238817,275465,276909,255315]
+# select_buildings = [156852, 299306, 319304, 316380, 239426, 255906, 123053, 158249, 149342, 180685, 
+#                     123132, 320550, 313201, 319202, 296022, 280282, 152240, 266762, 291977, 284485, 
+#                     301222, 313196, 281599, 319202, 309683, 298691, 263865, 324028, 249842, 231654, 
+#                     238817, 275465, 276909, 255315, 195919, 149516, 239263, 267643, 126810, 135919, 
+#                     133662, 145379, 239274, 199126, 163575, 232168, 253697, 231993, 145387, 120313, 
+#                     188216, 145391, 255439, 157104, 132472, 157176, 132239, 249271, 245886, 218524, 
+#                     199997, 249470, 249274, 151507, 157708, 276910, 263118, 254775, 208885, 207153, 
+#                     180965, 208861, 163981, 169291, 147777, 139224, 152849, 210860, 203991, 160963, 
+#                     232001, 162720, 208105, 202712, 139016, 208983, 163150, 145868, 840217, 914551, 
+#                     124634, 158927, 209001, 157965, 190467, 151025] 
+# detached parts buildings
+# select_buildings = [840098, 892619, 905571, 836735, 910001, 906652, 892542, 539926, 639960, 545763, 
+#                     381063, 731359, 654489, 413861, 640234, 670255, 413597, 640784, 417886, 417472, 
+#                     395456, 373791, 376169, 384094, 387427, 278432, 155453, 202061, 157530, 315982, 
+#                     159052]
 
 def main():
     parser = argparse.ArgumentParser(description="shapefile dataset please")
@@ -80,8 +94,8 @@ def main():
     a_building_id = []
     a_holey_building = []
     for i in range(len(shapes)):
-        if rec[i]['BUILDING_I'] in select_buildings:
-        # if True:
+        # if rec[i]['BUILDING_I'] in select_buildings:
+        if True:
             # print("Building is {}".format(rec[i]['BUILDING_I']))
             # print(shapes[i].points)
             # print("-----------------------")
@@ -90,7 +104,7 @@ def main():
             for vert in shapes[i].points:
                 tmp.append(np.array([copy(vert[0]),copy(vert[1])]))
             if len(shapes[i].parts) > 1: ## marks building with holes
-                a_holey_building.append(shapes[i].points)
+                a_holey_building.append(shapes[i].parts)
             else:
                 a_holey_building.append(False)
             tmp_vertex_degrees.append(tmp)
@@ -143,7 +157,7 @@ def main():
     f = open(args.output, 'w')
     f.write("mtllib denver.mtl\ng denver\n")
 
-    
+    ## loop thru each building
     for i in range(len(a_vertex_degrees)):
         xx = []
         yy = []
@@ -152,40 +166,71 @@ def main():
         f_list = []
         building_vc = 0
         meter_v = []
-        for j in range(0, len(a_vertex_degrees[i])):
-            xx.append((a_vertex_degrees[i][j][0] - lower_left[0]) * long_deg)
-            yy.append((a_vertex_degrees[i][j][1] - lower_left[1]) * lat_deg)
-            if j == 0:
-                meter_v.append((a_vertex_degrees[i][j] - lower_left) * np.array([long_deg, lat_deg]))
-                vertex = (a_vertex_degrees[i][j] - lower_left) * np.array([long_deg, lat_deg])
-                v_list.append("v {:.4f} {:.4f} {:.4f}".format(vertex[1], building_low, vertex[0]))
-                v_list.append("v {:.4f} {:.4f} {:.4f}".format(vertex[1], building_high, vertex[0]))
-                vc += 2
-                building_vc += 2
-            elif j == len(a_vertex_degrees[i])-1:
-                f_list.append("f {} {} {}".format(vc-1, vc-building_vc+1, vc-building_vc+2))
-                f_list.append("f {} {} {}".format(vc-1, vc-building_vc+2, vc))
-                if a_holey_building[i]:
+        ## do the walls
+        if not a_holey_building[i]:
+            for j in range(0, len(a_vertex_degrees[i])):
+                xx.append((a_vertex_degrees[i][j][0] - lower_left[0]) * long_deg)
+                yy.append((a_vertex_degrees[i][j][1] - lower_left[1]) * lat_deg)
+                if j == 0:
                     meter_v.append((a_vertex_degrees[i][j] - lower_left) * np.array([long_deg, lat_deg]))
-            else:
-                meter_v.append((a_vertex_degrees[i][j] - lower_left) * np.array([long_deg, lat_deg]))
-                vertex = (a_vertex_degrees[i][j] - lower_left) * np.array([long_deg, lat_deg])
-                v_list.append("v {:.4f} {:.4f} {:.4f}".format(vertex[1], building_low, vertex[0]))
-                v_list.append("v {:.4f} {:.4f} {:.4f}".format(vertex[1], building_high, vertex[0]))
-                vc += 2
-                building_vc += 2
-                f_list.append("f {} {} {}".format(vc-3, vc-1, vc))
-                f_list.append("f {} {} {}".format(vc-3, vc, vc-2))
+                    vertex = (a_vertex_degrees[i][j] - lower_left) * np.array([long_deg, lat_deg])
+                    v_list.append("v {:.4f} {:.4f} {:.4f}".format(vertex[1], building_low, vertex[0]))
+                    v_list.append("v {:.4f} {:.4f} {:.4f}".format(vertex[1], building_high, vertex[0]))
+                    vc += 2
+                    building_vc += 2
+                elif j == len(a_vertex_degrees[i])-1:
+                    f_list.append("f {} {} {}".format(vc-1, vc-building_vc+1, vc-building_vc+2))
+                    f_list.append("f {} {} {}".format(vc-1, vc-building_vc+2, vc))
+                    # if a_holey_building[i]:
+                    #     meter_v.append((a_vertex_degrees[i][j] - lower_left) * np.array([long_deg, lat_deg]))
+                else:
+                    meter_v.append((a_vertex_degrees[i][j] - lower_left) * np.array([long_deg, lat_deg]))
+                    vertex = (a_vertex_degrees[i][j] - lower_left) * np.array([long_deg, lat_deg])
+                    v_list.append("v {:.4f} {:.4f} {:.4f}".format(vertex[1], building_low, vertex[0]))
+                    v_list.append("v {:.4f} {:.4f} {:.4f}".format(vertex[1], building_high, vertex[0]))
+                    vc += 2
+                    building_vc += 2
+                    f_list.append("f {} {} {}".format(vc-3, vc-1, vc))
+                    f_list.append("f {} {} {}".format(vc-3, vc, vc-2))
+        else:
+            # print("doubles at :", a_holey_building[i])
+            for j in range(0, len(a_vertex_degrees[i])):
+                xx.append((a_vertex_degrees[i][j][0] - lower_left[0]) * long_deg)
+                yy.append((a_vertex_degrees[i][j][1] - lower_left[1]) * lat_deg)
+                if j == 0:
+                    meter_v.append((a_vertex_degrees[i][j] - lower_left) * np.array([long_deg, lat_deg]))
+                    vertex = (a_vertex_degrees[i][j] - lower_left) * np.array([long_deg, lat_deg])
+                    v_list.append("v {:.4f} {:.4f} {:.4f}".format(vertex[1], building_low, vertex[0]))
+                    v_list.append("v {:.4f} {:.4f} {:.4f}".format(vertex[1], building_high, vertex[0]))
+                    vc += 2
+                    building_vc += 2
+                # elif j == len(a_vertex_degrees[i])-1:
+                #     f_list.append("f {} {} {}".format(vc-1, vc-building_vc+1, vc-building_vc+2))
+                #     f_list.append("f {} {} {}".format(vc-1, vc-building_vc+2, vc))
+                #     meter_v.append((a_vertex_degrees[i][j] - lower_left) * np.array([long_deg, lat_deg]))
+                else:
+                    meter_v.append((a_vertex_degrees[i][j] - lower_left) * np.array([long_deg, lat_deg]))
+                    vertex = (a_vertex_degrees[i][j] - lower_left) * np.array([long_deg, lat_deg])
+                    v_list.append("v {:.4f} {:.4f} {:.4f}".format(vertex[1], building_low, vertex[0]))
+                    v_list.append("v {:.4f} {:.4f} {:.4f}".format(vertex[1], building_high, vertex[0]))
+                    vc += 2
+                    building_vc += 2
+                    if j in a_holey_building[i]:
+                        continue
+                    else:
+                        f_list.append("f {} {} {}".format(vc-3, vc-1, vc))
+                        f_list.append("f {} {} {}".format(vc-3, vc, vc-2))
+
         # print(a_building_id[i])
         # annots= []
         # for li in range(len(xx)):
         #     annots.append("{}".format(li))
-        # plt.plot(xx,yy)
-        # plt.ylabel("x axis")
-        # plt.xlabel("z axis")
+        plt.plot(xx,yy)
+        plt.ylabel("x axis")
+        plt.xlabel("z axis")
         # for ii, label in enumerate(annots):
         #     plt.annotate(label, xx[ii], yy[ii])
-        # plt.show()
+        plt.show()
 
 
         # print("printing meter version")
@@ -195,9 +240,24 @@ def main():
 
         if add_roofs:
             if a_holey_building[i]:
-                new_file_name = "b{}i{}.poly".format(a_building_id[i], i)
-                write_poly_file(meter_v, new_file_name, path)
-            else:
+                ## the "else" code only works on polygon roofs that don't have holes
+                ## for holey roofs we'll use Jon Shewchuk's Triangle code. https://www.cs.cmu.edu/~quake/triangle.html
+                ## step 1, generate .poly file as input for triangle software
+                new_file_name = "b{}i{}".format(a_building_id[i], i)
+                out = write_poly_file(meter_v, new_file_name, path)
+                if out == 1:
+                    ## step 2, run triangle software on .poly file ---> returns .node (verticies) and .ele (faces) files 
+                    os.system("{}triangle -pq {} 1>/dev/null".format(path, path+new_file_name))
+                    ## read .node and .ele files and prepare .obj output
+                    vs_and_faces = read_ele_node(vc, building_high, new_file_name, path)
+                    for ver_i in range(len(vs_and_faces[0])):
+                        v_list.append(vs_and_faces[0][ver_i])
+                    vc = vs_and_faces[2][0]
+                    for fac_i in range(len(vs_and_faces[1])):
+                        f_list.append(vs_and_faces[1][fac_i])
+                else:
+                    print("{}, ".format(a_building_id[i]), end='')
+            else: ## only does polygons with no holes, used the ear clipping method.
                 xx = xx[:-1]
                 yy = yy[:-1]
                 roof_indi = []
@@ -243,8 +303,8 @@ def main():
             f.write(item)
             f.write('\n')
         bc += 1
-        if bc % 1000 == 0:
-            print("{} buildings written\r".format(bc), end='')
+        # if bc % 1000 == 0:
+        #     print("{} buildings written\r".format(bc), end='')
 
     if add_ground:
         meter_upper_right = (upper_right-lower_left) * np.array([long_deg, lat_deg])

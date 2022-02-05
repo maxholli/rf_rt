@@ -122,12 +122,16 @@ namespace osc {
       // on linux, common practice is to have ONE level of build dir
       // (say, <project>/build/)...
       // "../models/sponza.obj"
-      "../models/roof01.obj"
+      "../models/full_denver.obj"
 #endif
                              );
       // standard
-      Camera camera = { /*from*/vec3f(-375.f, 325.0f, model->bounds.center().z),
-                        /* at */vec3f(model->bounds.center().x-40.f, model->bounds.center().y, model->bounds.center().z),
+      // Camera camera = { /*from*/vec3f(-375.f, 325.0f, model->bounds.center().z),
+      //                   /* at */vec3f(model->bounds.center().x-40.f, model->bounds.center().y, model->bounds.center().z),
+      //                   /* up */vec3f(0.f,1.f,0.f) };
+      // centered over denver
+      Camera camera = { /*from*/vec3f(model->bounds.center().x-1000.f, 325.0f, model->bounds.center().z-10000.f),
+                        /* at */vec3f(model->bounds.center().x, model->bounds.center().y, model->bounds.center().z-10000.f),
                         /* up */vec3f(0.f,1.f,0.f) };
       // centered over Boulder City
       // Camera camera = { /*from*/vec3f(-375.f, 325.0f, model->bounds.center().z),
