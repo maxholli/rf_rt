@@ -21,8 +21,8 @@ import os
 # >>> shapes[0].bbox
 
 # Records are as the following:
-# BUILDING_I
-# BLDG_HEIGH
+# DRCOGID
+# BLDGHEIGHT
 # GROUND_ELE
 # among other things
 # sf.fields to see record types
@@ -38,13 +38,13 @@ add_roofs = True
 add_sun = True
 
 ## path the the holey building directory
-path = "/home/cc/Workspace/holey_Bs/"
+path = "/home/cc/Workspace/holey_Bs/p_boulder/"
 
 # select_buildings = [322683]#, 322093, 322403]
 # select_buildings = [156852]
 # select_buildings = [319954] # problem building
 # select_buildings = [284485] # two holes
-select_buildings = [231654] # four holes
+# select_buildings = [231654] # four holes
 # select_buildings = [319202] # rose medical complex
 # select_buildings = [840098] # problem building
 # select_buildings = [38392] # height issue
@@ -63,11 +63,11 @@ select_buildings = [231654] # four holes
 #                     180965, 208861, 163981, 169291, 147777, 139224, 152849, 210860, 203991, 160963, 
 #                     232001, 162720, 208105, 202712, 139016, 208983, 163150, 145868, 840217, 914551, 
 #                     124634, 158927, 209001, 157965, 190467, 151025] 
-# detached parts buildings
-bad_buildings = [840098, 892619, 905571, 836735, 910001, 906652, 892542, 539926, 639960, 545763, 
-                    381063, 731359, 654489, 413861, 640234, 670255, 413597, 640784, 417886, 417472, 
-                    395456, 373791, 376169, 384094, 387427, 278432, 155453, 202061, 157530, 315982, 
-                    159052]
+# 
+# bad_buildings = [840098, 892619, 905571, 836735, 910001, 906652, 892542, 539926, 639960, 545763, 
+                    # 381063, 731359, 654489, 413861, 640234, 670255, 413597, 640784, 417886, 417472, 
+                    # 395456, 373791, 376169, 384094, 387427, 278432, 155453, 202061, 157530, 315982, 
+                    # 159052]
 
 # building 202061
 # Denver Academy
@@ -78,6 +78,12 @@ bad_buildings = [840098, 892619, 905571, 836735, 910001, 906652, 892542, 539926,
 # residential building on Alameda 
 # 255 S Cherokee St, Denver, CO 80223
 # select_buildings = [278432] # part index 1 (of 2) has 3 erronious vertexes that make an inner hole (breaks triangle) in the hole
+
+# boulder specific
+select_buildings = [970901] #leeds buisiness
+# select_buildings = [971724] # engineering center
+bad_buildings = []
+
 
 def main():
     parser = argparse.ArgumentParser(description="shapefile dataset please")
@@ -100,7 +106,7 @@ def main():
     # print(type(ls1[0][0]))
     # rec1a = rec[0]['BUILDING_I']
     # rec1b = rec[0]['GROUND_ELE']
-    # rec1c = rec[0]['BLDG_HEIGH']
+    # rec1c = rec[0]['BLDGHEIGHT']
     # print(rec1a, rec1b, rec1c)
    
     ## filter for BUILDING_I and change from tuple to array data-structure
@@ -109,10 +115,10 @@ def main():
     a_building_id = []
     a_holey_building = []
     for i in range(len(shapes)):
-        # if rec[i]['BUILDING_I'] not in bad_buildings:
-        if rec[i]['BUILDING_I'] not in bad_buildings and rec[i]['BUILDING_I'] in select_buildings:
+        # if rec[i]['DRCOGID'] not in bad_buildings:
+        if rec[i]['DRCOGID'] not in bad_buildings and rec[i]['DRCOGID'] in select_buildings:
         # if True:
-            # print("Building is {}".format(rec[i]['BUILDING_I']))
+            # print("Building is {}".format(rec[i]['DRCOGID']))
             # print(shapes[i].points)
             # print("-----------------------")
             # print(shapes[i].parts)
@@ -124,8 +130,8 @@ def main():
             else:
                 a_holey_building.append(False)
             tmp_vertex_degrees.append(tmp)
-            a_building_height.append(rec[i]['BLDG_HEIGH'])
-            a_building_id.append(rec[i]['BUILDING_I'])
+            a_building_height.append(rec[i]['BLDGHEIGHT'])
+            a_building_id.append(rec[i]['DRCOGID'])
             # if (len(a_building_id)> 10500):
             #     break
     del sf
@@ -238,18 +244,19 @@ def main():
                         f_list.append("f {} {} {}".format(vc-3, vc-1, vc))
                         f_list.append("f {} {} {}".format(vc-3, vc, vc-2))
 
-        print(a_building_id[i], i)
+        # print(a_building_id[i], i)
         # print(a_vertex_degrees[i])
+        print("{}, {}".format(a_vertex_degrees[i][0][0], a_vertex_degrees[i][0][1], '.60g'))
         # print(a_holey_building[i])
         # annots= []
         # for li in range(len(xx)):
         #     annots.append("{}".format(li))
-        plt.plot(xx,yy)
-        plt.ylabel("x axis")
-        plt.xlabel("z axis")
+        # plt.plot(xx,yy)
+        # plt.ylabel("x axis")
+        # plt.xlabel("z axis")
         # for ii, label in enumerate(annots):
         #     plt.annotate(label, xx[ii], yy[ii])
-        plt.show()
+        # plt.show()
 
 
         # print("printing meter version")

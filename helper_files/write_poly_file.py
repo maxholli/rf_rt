@@ -1,17 +1,38 @@
 from triangulate_roofs import find_first_concave
 
+
+# doubles is [43, 48, 53]
+# 54
+# p_doubles is [0, 44, 49]
+
+# doubles is [41, 46, 51, 56, 61]
+# 62
+# p_doubles is [0, 42, 47, 52, 57]
+
+# doubles is [168, 4, 173]
+# 174
+# p_doubles is [0, 169]
+
 ## bab is bad acting building (aka building with holes)
-def write_poly_file(bab, file_name, path):
+def write_poly_file(bab, p_doubles, file_name, path):
     f = open(path+file_name+".poly", 'w')
+    # walls_count = len(p_doubles) - 1
     walls_count = 0
     doubles = []
+    # print("bab is {}".format(bab))
     for i in range(len(bab)):
+        # print(bab[i])
         for j in range(i+1,len(bab)):
             if (bab[i] == bab[j]).all():
                 walls_count += 1
                 doubles.append(j)
+    # # for i in range(1,len(p_doubles)):
+    # #     doubles.append(p_doubles[i]-1)
+    # # doubles.append(len(bab)-1)
     # print("number of holes {}".format(walls_count-1))
     # print("doubles is {}".format(doubles))
+    # print(len(bab))
+    # print("p_doubles is {}".format(p_doubles))
     f.write("{} {} {} {}\n".format(len(bab)-walls_count, 2, 0, 0))
     vi = 1
     for ii, vert in enumerate(bab):
@@ -39,6 +60,7 @@ def write_poly_file(bab, file_name, path):
         rev_sendoff = []
         for j in range(1,len(sendoff)+1):
             rev_sendoff.append(sendoff[len(sendoff)-j])
+        # print("rev_sendoff is {}".format(rev_sendoff))
         a = find_first_concave(rev_sendoff)
         if a is None:
             return 0
@@ -93,3 +115,4 @@ def read_ele_node(vc, building_high, file_name, path):
             line_num += 1        
     f.close()
     return return_ar
+
