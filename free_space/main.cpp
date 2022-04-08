@@ -19,6 +19,7 @@
 #include "worlds/floating_triangle.h"
 // #include "worlds/cornell_box.h"
 #include "worlds/three_marbles_worship.h"
+#include "worlds/empty.h"
 
 #include <iostream>
 #include <string>
@@ -135,116 +136,34 @@ int main()
     int image_height = static_cast<int>(image_width / aspect_ratio);
     int samples_per_pixel = 100;
     const int max_depth = 10;
-    int num_rf_rays = 100000;
+    uint64_t num_rf_rays = 0;
     // World
     hittable_list world;
     point3 lookfrom;
     point3 lookat;
     point3 antenna_lookfrom;
     double vfov;
-    double r_width = 1.0;
-    
+    double r_width = 1.0; // ray width for image generation (triangle height)
+    double f = 300000000;
 
     color background = color(0.70, 0.80, 1.00); // default light blue
     // color background = color(0, 0, 0);
 
-    switch (5)
+    switch (0)
     {
         case 0:
-            world = three_marbles_worship();
-            aspect_ratio = 16.0 / 9.0;
-            image_width = 400;
-            image_height = static_cast<int>(image_width / aspect_ratio);
-            samples_per_pixel = 50;
-            background = color(0, 0, 0);
-            lookfrom = point3(-0.5,2,2);
-            lookat = point3(0,0,-1);
-            vfov = 90.0;
-
-            antenna_lookfrom = lookfrom;
-            num_rf_rays = 500;
-            break;
-        case 1:
-            // world = cornell_box();
+            world = empty();
             aspect_ratio = 1.0;
             image_width = 600;
             image_height = static_cast<int>(image_width / aspect_ratio);
             samples_per_pixel = 1;
             background = color(0,0,0);
-            lookfrom = point3(278, 278, -800);
-            lookat = point3(278, 278, 0);
+            lookfrom = point3(0, 0, 0);
+            lookat = point3(0, 0, 10);
             vfov = 40.0;
             antenna_lookfrom = lookfrom;
-            num_rf_rays = 10000;
-            break;
-        case 2:
-            world = floating_square();
-            aspect_ratio = 1.0;
-            image_width = 30;
-            image_height = static_cast<int>(image_width / aspect_ratio);
-            samples_per_pixel = 1;
-            background = color(0.70, 0.80, 1.00);
-            lookfrom = point3(0,2,2);
-            lookat = point3(0,2,-1);
-            vfov = 90.0;
-            antenna_lookfrom = lookfrom;
-            num_rf_rays = 10000;
-            break;
-        case 3:
-            world = floating_triangle();
-            aspect_ratio = 1.0;
-            image_width = 200;
-            image_height = static_cast<int>(image_width / aspect_ratio);
-            samples_per_pixel = 1;
-            background = color(0.70, 0.80, 1.00);
-            lookfrom = point3(0,2,2);
-            lookat = point3(0,2,-2);
-            vfov = 90.0;
-            antenna_lookfrom = lookfrom;
-            num_rf_rays = 10000;
-            break;
-        case 4:
-            // for generating an image
-            world = norlin_quad(); 
-            aspect_ratio = 16.0 / 9.0;
-            image_width = 500;
-            image_height = static_cast<int>(image_width / aspect_ratio);
-            samples_per_pixel = 10;
-            
-            // overhead view from south
-            background = color(176.0/256, 203.0/256, 247.0/256);
-            lookfrom = point3(290,300,50);
-            lookat = point3(290,15,-135);
-            vfov = 56.0;
-
-            // rx looking down norlin quad
-            // background = color(0, 0, 0);
-            // lookfrom = point3(140,10,-260);
-            // lookat = point3(300,10,-260);
-            // vfov = 90.0;
-            
-            antenna_lookfrom = lookfrom;
-            num_rf_rays = 1000000;
-            r_width = 2.0;
-            break;
-
-        case 5:
-            // for rf_modeling
-            world = norlin_quad_rf(); 
-            aspect_ratio = 16.0 / 9.0;
-            image_width = 500;
-            image_height = static_cast<int>(image_width / aspect_ratio);
-            samples_per_pixel = 10;
-
-            // rx looking down norlin quad
-            background = color(0, 0, 0);
-            lookfrom = point3(140,10,-260);
-            lookat = point3(300,10,-260);
-            vfov = 90.0;
-            
-            antenna_lookfrom = lookfrom;
-            num_rf_rays = 10000;
-            r_width = 2.0;
+            num_rf_rays = 3000000000;
+            // num_rf_rays = 300000000;
             break;
     }
 
@@ -258,14 +177,15 @@ int main()
         // antenna
         iso_antenna antenna(antenna_lookfrom);
         // model
-        for (int i = 0; i < num_rf_rays; i++)
+        int hit_count = 0;
+        for (uint64_t i = 0; i < num_rf_rays; i++)
         {
             if (i % 10000 == 0)  
                 std::cerr << "\rRays remaining: " << num_rf_rays - i << ' ' << std::flush;
             color pixel_color(0,0,0);
             // do another for loop here for samples per pixel
             ray r = antenna.get_ray();
-            if (r.dir.y() > 0.05 || r.dir.y() < -0.05)
+            if (r.dir.y() > 0.02 || r.dir.y() < -0.02)
                 continue;
 
             bounce_hist ray_history;
@@ -274,7 +194,8 @@ int main()
 
             if (print_ray_history) {  
                 if (ray_history.hit_points.size() > 0)
-                {
+                {   
+                    hit_count++;
                     if (ray_history.hit_points.at(ray_history.hit_points.size()-1).is_source == true)
                     {  
                         point_bool camera_loc;
@@ -283,32 +204,23 @@ int main()
                         std::vector<point_bool>::iterator it;
                         it = ray_history.hit_points.begin();
                         ray_history.hit_points.insert(it, camera_loc);
-                        // for (const auto& hit_point : ray_history.hit_points) 
-                        // {
-                        //     std::cout << " hit p = " << hit_point.hit << " source? = " << hit_point.is_source << " " << std::endl;
-                        // }
-                        int num_points_in_path = static_cast<int>(ray_history.hit_points.size());
-                        for (int r_i = 0; r_i < num_points_in_path-1; r_i++)
+                        for (const auto& hit_point : ray_history.hit_points) 
                         {
-                            // std::cout << " hit p = " << ray_history.hit_points[r_i].hit << " source? = " << ray_history.hit_points[r_i].is_source << " " << std::endl;
-                            vec3 y_adj(0,r_width/2.0,0);
-                            // world.add(make_shared<triangle>(point3(230.57,20.00,-6.80), point3(237.72,20.00,-17.53), point3(237.72,0.00,-17.53), material_s1));
-                            std::cout << "world.add(make_shared<triangle>(point3(" << ray_history.hit_points[r_i].hit - y_adj 
-                                        << "), point3(" << ray_history.hit_points[r_i+1].hit - y_adj 
-                                        << "), point3(" << ray_history.hit_points[r_i].hit + y_adj
-                                        << "), material_s2));" << std::endl;
-                            std::cout << "world.add(make_shared<triangle>(point3(" << ray_history.hit_points[r_i].hit + y_adj 
-                                        << "), point3(" << ray_history.hit_points[r_i+1].hit + y_adj 
-                                        << "), point3(" << ray_history.hit_points[r_i+1].hit - y_adj
-                                        << "), material_s2));" << std::endl;
-                        
-                        }             
-                        // std::cout << "path length = " << path_length(ray_history) << '\n' << std::endl;
+                            std::cout << " hit p = " << hit_point.hit << " source? = " << hit_point.is_source << " " << std::endl;
+                        }
+                        int num_points_in_path = static_cast<int>(ray_history.hit_points.size());
+       
+                        std::cout << "path length = " << path_length(ray_history) << '\n' << std::endl;
                     }
                 } 
             }
         }
         std::cerr << "\nDone.\n";
+        std::cerr << hit_count << " / " << num_rf_rays << "\n";
+        double Q = hit_count;
+        Q = Q / num_rf_rays;
+        double fspl = (-10.0 * log10(Q)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
+        std::cerr << fspl << "\n";
     }
 
 
