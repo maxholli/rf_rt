@@ -162,7 +162,7 @@ int main()
             lookat = point3(0, 0, 10);
             vfov = 40.0;
             antenna_lookfrom = lookfrom;
-            num_rf_rays = 3000000000;
+            num_rf_rays = 100000000000;
             // num_rf_rays = 300000000;
             break;
     }
@@ -180,14 +180,15 @@ int main()
         int hit_count = 0;
         for (uint64_t i = 0; i < num_rf_rays; i++)
         {
-            if (i % 10000 == 0)  
+            if (i % 1000000 == 0)  
                 std::cerr << "\rRays remaining: " << num_rf_rays - i << ' ' << std::flush;
             color pixel_color(0,0,0);
             // do another for loop here for samples per pixel
             ray r = antenna.get_ray();
             if (r.dir.y() > 0.02 || r.dir.y() < -0.02)
                 continue;
-
+            if (r.dir.z() < 0.98)
+                continue;
             bounce_hist ray_history;
 
             pixel_color += ray_color(r, background, world, max_depth, &ray_history);
@@ -221,6 +222,8 @@ int main()
         Q = Q / num_rf_rays;
         double fspl = (-10.0 * log10(Q)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
         std::cerr << fspl << "\n";
+        std::cout << hit_count << " / " << num_rf_rays << "\n";
+        std::cout << fspl << "\n";
     }
 
 
