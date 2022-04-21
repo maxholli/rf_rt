@@ -13,19 +13,21 @@
 #include "headers/aabb.h"
 #include "headers/bvh.h"
 
-#include "worlds/norlin_quad.h"
-#include "worlds/norlin_quad_rf.h"
-#include "worlds/floating_square.h"
-#include "worlds/floating_triangle.h"
+// #include "worlds/norlin_quad.h"
+// #include "worlds/norlin_quad_rf.h"
+// #include "worlds/floating_square.h"
+// #include "worlds/floating_triangle.h"
 // #include "worlds/cornell_box.h"
-#include "worlds/three_marbles_worship.h"
+// #include "worlds/three_marbles_worship.h"
 #include "worlds/empty.h"
+#include "worlds/ground_only.h"
 
 #include <iostream>
 #include <string>
 #include <chrono>
 #include <sys/time.h>
 #include <ctime>
+#include <complex>
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
@@ -56,11 +58,12 @@ color ray_color(const ray& r, const color& background, const hittable& world, in
 
     if (!rec.mat_ptr->scatter(r, rec, attenuation, scattered))
     {
-        ray_history->add(rec.p, true);
+        // ray hits an emitter and doesn't keep bouncing. 
+        ray_history->add(rec.p, true, 0.0);
         return emitted;
     }
 
-    ray_history->add(rec.p, false);
+    ray_history->add(rec.p, false, dot(scattered.direction(), rec.normal));
     return emitted + attenuation * ray_color(scattered, background, world, depth-1, ray_history);
 }
 
@@ -126,8 +129,10 @@ double path_length(bounce_hist ray_hist)
     return path_len;
 }
 
-int main()
-{
+int main(int argc, char** argv)
+{   
+    
+    using namespace std::complex_literals;
     srand(time(NULL));
 
     // image
@@ -144,25 +149,25 @@ int main()
     point3 antenna_lookfrom;
     double vfov;
     double r_width = 1.0; // ray width for image generation (triangle height)
-    double f = 300000000;
+    double f = 900000000;
 
     color background = color(0.70, 0.80, 1.00); // default light blue
     // color background = color(0, 0, 0);
-
+    double z_start = std::stod(argv[1]);
     switch (0)
     {
         case 0:
-            world = empty();
+            world = ground_only();
             aspect_ratio = 1.0;
             image_width = 600;
             image_height = static_cast<int>(image_width / aspect_ratio);
             samples_per_pixel = 1;
             background = color(0,0,0);
-            lookfrom = point3(0, 0, 0);
+            lookfrom = point3(0, 50, z_start);
             lookat = point3(0, 0, 10);
             vfov = 40.0;
             antenna_lookfrom = lookfrom;
-            num_rf_rays = 1000000000;
+            num_rf_rays = 1e8;
             // num_rf_rays = 300000000;
             break;
     }
@@ -177,8 +182,12 @@ int main()
         // antenna
         iso_antenna antenna(antenna_lookfrom);
         // model
-        int hit_count = 0;
-        float av_path_length = 0;
+        int hit_1_count = 0;
+        int hit_2_count = 0;
+        float ave_1_leng = 0;
+        float ave_2_leng = 0;
+        double ave_psi = 0;
+        color ground_properties(0,0,0);
         for (uint64_t i = 0; i < num_rf_rays; i++)
         {
             if (i % 1000000 == 0)  
@@ -186,9 +195,11 @@ int main()
             color pixel_color(0,0,0);
             // do another for loop here for samples per pixel
             ray r = antenna.get_ray();
-            if (r.dir.y() > 0.02 || r.dir.y() < -0.02)
+            if (r.dir.y() > 0.002)
                 continue;
-            if (r.dir.z() < 0.98)
+            if (r.dir.z() < -0.005)
+                continue;
+            if (r.dir.x() < -0.1 || r.dir.x() > 0.1 )
                 continue;
             bounce_hist ray_history;
 
@@ -197,7 +208,7 @@ int main()
             if (print_ray_history) {  
                 if (ray_history.hit_points.size() > 0)
                 {   
-                    hit_count++;
+                    
                     if (ray_history.hit_points.at(ray_history.hit_points.size()-1).is_source == true)
                     {  
                         point_bool camera_loc;
@@ -206,29 +217,97 @@ int main()
                         std::vector<point_bool>::iterator it;
                         it = ray_history.hit_points.begin();
                         ray_history.hit_points.insert(it, camera_loc);
-                        for (const auto& hit_point : ray_history.hit_points) 
-                        {
-                            std::cout << " hit p = " << hit_point.hit << " source? = " << hit_point.is_source << " " << std::endl;
-                        }
+                        // for (const auto& hit_point : ray_history.hit_points) 
+                        // {
+                        //     std::cout << " hit p = " << hit_point.hit << " source? = " << hit_point.is_source << " psi=" << hit_point.psi << std::endl;
+                        // }
+                        // std::cout << " material " << pixel_color << std::endl;
                         int num_points_in_path = static_cast<int>(ray_history.hit_points.size());
-       
-                        float cur_path_length = path_length(ray_history);
-                        av_path_length = av_path_length + cur_path_length;
-                        std::cout << "path length = " << cur_path_length << '\n' << std::endl;
-
+                        // std::cout << ray_history.hit_points.size() << " hits" << std::endl;
+                        // std::cout << "path length = " << path_length(ray_history) << '\n' << std::endl;
+                        if (ray_history.hit_points.size() == 2)
+                        {
+                            // LOS rays
+                            hit_1_count++;
+                            ave_1_leng = ave_1_leng + path_length(ray_history);
+                        }
+                        else if (ray_history.hit_points.size() == 3)
+                        {
+                            // Ground bounce rays
+                            hit_2_count++;
+                            ave_2_leng = ave_2_leng + path_length(ray_history);
+                            ground_properties = pixel_color;
+                            ave_psi = ave_psi + ray_history.hit_points[1].psi;
+                        }
                     }
                 } 
             }
         }
+        double modifier = 0.564189584 * 0.679;
+        double leng_1 = ave_1_leng/hit_1_count + modifier;
+        double leng_2 = ave_2_leng/hit_2_count + modifier;
+        double psi_rad = ave_psi/hit_2_count;
         std::cerr << "\nDone.\n";
-        std::cerr << hit_count << " / " << num_rf_rays << "\n";
-        std::cerr << "average path length = " << av_path_length / hit_count << "\n";
-        double Q = hit_count;
+        // std::cerr << argv[1] << "\n";
+        std::cerr << "average psi " << psi_rad << "\n";
+        std::cerr << "LOS hits " << hit_1_count << "\n";
+        std::cerr << "LOS ray length " << leng_1 << "\n";
+        std::cerr << "Bounce hits " << hit_2_count << "\n";
+        std::cerr << "Bounce ray length " << leng_2 << "\n";
+
+        // std::cerr << hit_count << " / " << num_rf_rays << "\n";
+        double Q = hit_1_count;
+        
+        // Find the reflection doefficient of the ground
+        double epsilon = ground_properties.x(); // dielectric constant of the ground
+        double sigma = ground_properties.y(); // conductivity of the ground
+        double epsilon_fs = 8.8541878128e-12; // dielectric constant of free space
+        double omega = 2 * M_PI * f;
+        double x = sigma / (omega * epsilon_fs);
+        // double psi_rad = 0.10462;
+        std::complex<double> comp_part = epsilon - 1i*x;
+        std::complex<double> rnum = comp_part * sin(psi_rad) - sqrt(comp_part - pow(cos(psi_rad),2));
+        std::complex<double> rden = comp_part * sin(psi_rad) + sqrt(comp_part - pow(cos(psi_rad),2));
+        std::complex<double> rho_v = rnum / rden;
+        std::cerr << "reflection coefficient " << rho_v << "\n";
+
+        double delta_d = leng_2 - leng_1;
+        double lamb = 300000000 / f;
+        double delta_phi = (2 * M_PI / lamb) * delta_d;
+        std::cerr << "phase difference, radians " << delta_phi << "\n";
+        std::complex<double> ce_phi = cos(delta_phi) - 1i*sin(delta_phi);
+        std::cerr << "phase contribution mag " << sqrt(pow(real(ce_phi),2)+pow(imag(ce_phi),2)) << "\n";
+
+        std::complex<double> change_E = 1.0 + 0.0i;
+        change_E = change_E + rho_v * ce_phi;
+        std::cerr << "change E " << change_E <<  "\n";
+        double change_P = pow(real(change_E),2)+ pow(imag(change_E),2);
+        std::cerr << "change P " << change_P <<  "\n";
+
+        // double refl_contribution = (change_P - 1.0) * hit_2_count;
+        // int refl_cont_whole = round(refl_contribution);
+        // std::cerr << "reflection contribrution " << refl_contribution << " " << refl_cont_whole << "rays\n";
+        // Q = Q + refl_cont_whole;
         Q = Q / num_rf_rays;
-        double fspl = (-10.0 * log10(Q)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
-        std::cerr << fspl << "\n";
-        std::cout << hit_count << " / " << num_rf_rays << "\n";
-        std::cout << fspl << "\n";
+        double pathloss = (-10.0 * log10(Q)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000)) + (-10.0 * log10(change_P));
+        std::cerr << "Path Loss " << pathloss << "\n";
+
+        std::cerr << "ray addition alternative\n";
+        double nQ = hit_1_count;
+        double refl_contribution = (change_P - 1.0) * hit_2_count;
+        int refl_cont_whole = round(refl_contribution);
+        double rQ = hit_1_count + refl_contribution;
+        nQ = nQ + refl_cont_whole;
+        
+        nQ = nQ / num_rf_rays;
+        rQ = rQ / num_rf_rays;
+        double pathloss_w = (-10.0 * log10(nQ)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
+        std::cerr << "Path Loss whole numbers" << pathloss_w << "\n";
+        double pathloss_r = (-10.0 * log10(rQ)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
+        std::cerr << "Path Loss reals" << pathloss_r << "\n";
+        std::cout << 1000-z_start << ", " << pathloss_w << ", " << pathloss << "\n";
+        // std::cout << fspl << "\n";
+        
     }
 
 
