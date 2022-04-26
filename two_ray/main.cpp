@@ -150,14 +150,17 @@ int main(int argc, char** argv)
     double vfov;
     double r_width = 1.0; // ray width for image generation (triangle height)
     double f = 900000000;
+    double r_frac = sqrt(1/M_PI)/200;
 
     color background = color(0.70, 0.80, 1.00); // default light blue
     // color background = color(0, 0, 0);
+    double z_recv = 1000.0;
     double z_start = std::stod(argv[1]);
+    double dist = z_recv - z_start;
     switch (0)
     {
         case 0:
-            world = ground_only();
+            world = ground_only(r_frac*dist, z_recv);
             aspect_ratio = 1.0;
             image_width = 600;
             image_height = static_cast<int>(image_width / aspect_ratio);
@@ -167,7 +170,7 @@ int main(int argc, char** argv)
             lookat = point3(0, 0, 10);
             vfov = 40.0;
             antenna_lookfrom = lookfrom;
-            num_rf_rays = 1e8;
+            num_rf_rays = 1e9;
             // num_rf_rays = 300000000;
             break;
     }
@@ -190,8 +193,8 @@ int main(int argc, char** argv)
         color ground_properties(0,0,0);
         for (uint64_t i = 0; i < num_rf_rays; i++)
         {
-            if (i % 1000000 == 0)  
-                std::cerr << "\rRays remaining: " << num_rf_rays - i << ' ' << std::flush;
+            // if (i % 1000000 == 0)  
+            //     std::cerr << "\rRays remaining: " << num_rf_rays - i << ' ' << std::flush;
             color pixel_color(0,0,0);
             // do another for loop here for samples per pixel
             ray r = antenna.get_ray();
@@ -289,7 +292,8 @@ int main(int argc, char** argv)
         // std::cerr << "reflection contribrution " << refl_contribution << " " << refl_cont_whole << "rays\n";
         // Q = Q + refl_cont_whole;
         Q = Q / num_rf_rays;
-        double pathloss = (-10.0 * log10(Q)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000)) + (-10.0 * log10(change_P));
+        Q = Q/(pow(dist,2)/40000);
+        double pathloss = (-10.0 * log10(Q)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
         std::cerr << "Path Loss " << pathloss << "\n";
 
         std::cerr << "ray addition alternative\n";
@@ -301,6 +305,7 @@ int main(int argc, char** argv)
         
         nQ = nQ / num_rf_rays;
         rQ = rQ / num_rf_rays;
+        nQ = nQ/(pow(dist,2)/40000);
         double pathloss_w = (-10.0 * log10(nQ)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
         std::cerr << "Path Loss whole numbers" << pathloss_w << "\n";
         double pathloss_r = (-10.0 * log10(rQ)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));

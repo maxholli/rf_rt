@@ -31,6 +31,10 @@
 *.out
 *.app
 
+# data output
+two_ray/*.txt
+two_ray/*.csv
+
 basic_graphic/output_images/*
 basic_rf/output_images/*
 OneWeekendGPU/build/*
