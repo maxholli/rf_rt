@@ -9,14 +9,13 @@
 #include "../headers/bounce_hist.h"
 #include "../headers/triangle.h"
 
-hittable_list empty() 
+hittable_list empty(double recv_center_z, double rad_sphere) 
 {
     hittable_list world;
 
-    // Floating transmitter at location 10,10,10
-    double radius_of_sphere = 2*0.564189584;
+    // Floating receiver at location (0,0,recv_center_z)
     auto material_tx_tower = make_shared<rf_transmit>(color(4, 4, 4));
-    world.add(make_shared<sphere>(point3( 0, 0, 1000), radius_of_sphere, material_tx_tower));
+    world.add(make_shared<sphere>(point3( 0, 0, recv_center_z), rad_sphere, material_tx_tower));
 
     return world;
 }
