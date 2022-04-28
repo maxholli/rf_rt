@@ -145,7 +145,8 @@ int main(int argc, char** argv)
 
     double receive_center_z = std::stod(argv[1]);
     double LOS_dist = receive_center_z;
-    double r_frac = sqrt(1/M_PI)/200;
+    double radius_scale_factor = 100;
+    double r_frac = sqrt(1/M_PI)/radius_scale_factor;
     //double receive_radius = sqrt(1/M_PI);
     double receive_radius = r_frac*LOS_dist;
     switch (0)
@@ -220,7 +221,7 @@ int main(int argc, char** argv)
         double Q = hit_count;
         Q = Q / num_rf_rays;
         // adjust for receiver size
-        Q = Q / (pow(LOS_dist,2)/40000);
+        Q = Q / (pow(LOS_dist,2)/pow(radius_scale_factor,2));
         double fspl = (-10.0 * log10(Q)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
         // std::cerr << fspl << "\n";
         // std::cout << hit_count << " / " << num_rf_rays << "\n";

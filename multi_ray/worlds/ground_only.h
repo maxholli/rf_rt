@@ -9,14 +9,14 @@
 #include "../headers/bounce_hist.h"
 #include "../headers/triangle.h"
 
-hittable_list ground_only(double recv_center_z, double rad_sphere, double recv_height) 
+hittable_list ground_only(double receiver_radius, double z_recv) 
 {
     hittable_list world;
 
     // make receiver sphere
-    // Floating receiver at location (0,recv_height,recv_center_z)
+    // double radius_of_sphere = 0.564189584;
     auto material_rx_tower = make_shared<rf_transmit>(color(1, 1, 1));
-    world.add(make_shared<sphere>(point3( 0, recv_height, recv_center_z), rad_sphere, material_rx_tower));
+    world.add(make_shared<sphere>(point3( 0, 2.5, z_recv), receiver_radius, material_rx_tower));
 
     // make ground
     // currently the ground reflects in a specular fashion (rf_universal)

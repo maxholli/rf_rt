@@ -17,7 +17,7 @@
 // #include "worlds/norlin_quad_rf.h"
 // #include "worlds/floating_square.h"
 // #include "worlds/floating_triangle.h"
-// // #include "worlds/cornell_box.h"
+// #include "worlds/cornell_box.h"
 // #include "worlds/three_marbles_worship.h"
 #include "worlds/empty.h"
 #include "worlds/ground_only.h"
@@ -58,6 +58,7 @@ color ray_color(const ray& r, const color& background, const hittable& world, in
 
     if (!rec.mat_ptr->scatter(r, rec, attenuation, scattered))
     {
+        // ray hits an emitter and doesn't keep bouncing. 
         ray_history->add(rec.p, true, 0.0);
         return emitted;
     }
@@ -129,47 +130,53 @@ double path_length(bounce_hist ray_hist)
 }
 
 int main(int argc, char** argv)
-{
+{   
+    
     using namespace std::complex_literals;
     srand(time(NULL));
 
     // image
+    double aspect_ratio = 16.0 / 9.0;
+    int image_width = 1000;
+    int image_height = static_cast<int>(image_width / aspect_ratio);
+    int samples_per_pixel = 100;
     const int max_depth = 10;
-    uint64_t num_rf_rays = 0; // reset in world spec
+    uint64_t num_rf_rays = 0;
     // World
     hittable_list world;
     point3 lookfrom;
     point3 lookat;
     point3 antenna_lookfrom;
-    double f = 300000000;
+    double vfov;
+    double r_width = 1.0; // ray width for image generation (triangle height)
+    double f = 900000000;
+    double r_frac = sqrt(1/M_PI)/200;
 
     color background = color(0.70, 0.80, 1.00); // default light blue
     // color background = color(0, 0, 0);
-
-    double receive_center_z = std::stod(argv[1]);
-    double ground_dist = receive_center_z;
-    double receiver_height = 2.5;
-    double transmit_height = 50;
-    double LOS_dist = sqrt(pow(ground_dist,2) + pow(transmit_height-receiver_height,2));
-    double radius_scale_factor = 100;
-    double r_frac = sqrt(1/M_PI)/radius_scale_factor;
-    //double receive_radius = sqrt(1/M_PI);
-    double receive_radius = r_frac*LOS_dist;
-    
+    double z_recv = 1000.0;
+    double z_start = std::stod(argv[1]);
+    double dist = z_recv - z_start;
     switch (0)
     {
         case 0:
-            world = ground_only(receive_center_z, receive_radius, receiver_height);
+            world = ground_only(r_frac*dist, z_recv);
+            aspect_ratio = 1.0;
+            image_width = 600;
+            image_height = static_cast<int>(image_width / aspect_ratio);
+            samples_per_pixel = 1;
             background = color(0,0,0);
-            lookfrom = point3(0, 50, 0);
+            lookfrom = point3(0, 50, z_start);
             lookat = point3(0, 0, 10);
+            vfov = 40.0;
             antenna_lookfrom = lookfrom;
-            num_rf_rays = 2e7;
+            num_rf_rays = 1e9;
             // num_rf_rays = 300000000;
             break;
     }
 
 
+    bool render_image = false;
     bool do_rf_model = true;
     bool print_ray_history = true;
     
@@ -178,16 +185,12 @@ int main(int argc, char** argv)
         // antenna
         iso_antenna antenna(antenna_lookfrom);
         // model
-        // int hit_count = 0;
-        // float av_path_length = 0;
-        
         int hit_1_count = 0;
         int hit_2_count = 0;
         float ave_1_leng = 0;
         float ave_2_leng = 0;
         double ave_psi = 0;
         color ground_properties(0,0,0);
-        
         for (uint64_t i = 0; i < num_rf_rays; i++)
         {
             // if (i % 1000000 == 0)  
@@ -195,12 +198,11 @@ int main(int argc, char** argv)
             color pixel_color(0,0,0);
             // do another for loop here for samples per pixel
             ray r = antenna.get_ray();
-                
             if (r.dir.y() > 0.002)
                 continue;
             if (r.dir.z() < -0.005)
                 continue;
-            if (r.dir.x() < -0.23 || r.dir.x() > 0.23 )
+            if (r.dir.x() < -0.1 || r.dir.x() > 0.1 )
                 continue;
             bounce_hist ray_history;
 
@@ -209,6 +211,7 @@ int main(int argc, char** argv)
             if (print_ray_history) {  
                 if (ray_history.hit_points.size() > 0)
                 {   
+                    
                     if (ray_history.hit_points.at(ray_history.hit_points.size()-1).is_source == true)
                     {  
                         point_bool camera_loc;
@@ -219,14 +222,12 @@ int main(int argc, char** argv)
                         ray_history.hit_points.insert(it, camera_loc);
                         // for (const auto& hit_point : ray_history.hit_points) 
                         // {
-                        //     std::cout << " hit p = " << hit_point.hit << " source? = " << hit_point.is_source << " " << std::endl;
+                        //     std::cout << " hit p = " << hit_point.hit << " source? = " << hit_point.is_source << " psi=" << hit_point.psi << std::endl;
                         // }
-                        // int num_points_in_path = static_cast<int>(ray_history.hit_points.size());
-       
-                        // float cur_path_length = path_length(ray_history);
-                        // av_path_length = av_path_length + cur_path_length;
-                        // std::cout << "path length = " << cur_path_length << std::endl;
-                        // std::cout << "initial direction = " << r.dir.x() << " " << r.dir.y() << " " << r.dir.z() << '\n' << std::endl;
+                        // std::cout << " material " << pixel_color << std::endl;
+                        int num_points_in_path = static_cast<int>(ray_history.hit_points.size());
+                        // std::cout << ray_history.hit_points.size() << " hits" << std::endl;
+                        // std::cout << "path length = " << path_length(ray_history) << '\n' << std::endl;
                         if (ray_history.hit_points.size() == 2)
                         {
                             // LOS rays
@@ -256,14 +257,17 @@ int main(int argc, char** argv)
         std::cerr << "LOS ray length " << leng_1 << "\n";
         std::cerr << "Bounce hits " << hit_2_count << "\n";
         std::cerr << "Bounce ray length " << leng_2 << "\n";
-    
 
+        // std::cerr << hit_count << " / " << num_rf_rays << "\n";
+        double Q = hit_1_count;
+        
+        // Find the reflection doefficient of the ground
         double epsilon = ground_properties.x(); // dielectric constant of the ground
         double sigma = ground_properties.y(); // conductivity of the ground
         double epsilon_fs = 8.8541878128e-12; // dielectric constant of free space
         double omega = 2 * M_PI * f;
         double x = sigma / (omega * epsilon_fs);
-
+        // double psi_rad = 0.10462;
         std::complex<double> comp_part = epsilon - 1i*x;
         std::complex<double> rnum = comp_part * sin(psi_rad) - sqrt(comp_part - pow(cos(psi_rad),2));
         std::complex<double> rden = comp_part * sin(psi_rad) + sqrt(comp_part - pow(cos(psi_rad),2));
@@ -283,9 +287,12 @@ int main(int argc, char** argv)
         double change_P = pow(real(change_E),2)+ pow(imag(change_E),2);
         std::cerr << "change P " << change_P <<  "\n";
 
-        double Q = hit_1_count;
+        // double refl_contribution = (change_P - 1.0) * hit_2_count;
+        // int refl_cont_whole = round(refl_contribution);
+        // std::cerr << "reflection contribrution " << refl_contribution << " " << refl_cont_whole << "rays\n";
+        // Q = Q + refl_cont_whole;
         Q = Q / num_rf_rays;
-        Q = Q / (pow(LOS_dist,2)/pow(radius_scale_factor,2));
+        Q = Q/(pow(dist,2)/40000);
         double pathloss = (-10.0 * log10(Q)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
         std::cerr << "Path Loss " << pathloss << "\n";
 
@@ -293,27 +300,80 @@ int main(int argc, char** argv)
         double nQ = hit_1_count;
         double refl_contribution = (change_P - 1.0) * hit_2_count;
         int refl_cont_whole = round(refl_contribution);
-        // double rQ = hit_1_count + refl_contribution;
+        double rQ = hit_1_count + refl_contribution;
         nQ = nQ + refl_cont_whole;
-
+        
         nQ = nQ / num_rf_rays;
-        // rQ = rQ / num_rf_rays;
-        nQ = nQ/(pow(LOS_dist,2)/pow(radius_scale_factor,2));
+        rQ = rQ / num_rf_rays;
+        nQ = nQ/(pow(dist,2)/40000);
         double pathloss_w = (-10.0 * log10(nQ)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
         std::cerr << "Path Loss whole numbers" << pathloss_w << "\n";
-        // double pathloss_r = (-10.0 * log10(rQ)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
-        // std::cerr << "Path Loss reals" << pathloss_r << "\n";
-        std::cout << ground_dist << ", " << pathloss_w << ", " << pathloss << "\n";
-
-
-        // Q = Q / num_rf_rays;
-        // // adjust for receiver size
-        // Q = Q / (pow(LOS_dist,2)/pow(radius_scale_factor,2));
-        // double fspl = (-10.0 * log10(Q)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
-        // // std::cerr << fspl << "\n";
-        // // std::cout << hit_count << " / " << num_rf_rays << "\n";
-        // std::cout << receive_center_z << ", " << fspl << "\n";
-
+        double pathloss_r = (-10.0 * log10(rQ)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
+        std::cerr << "Path Loss reals" << pathloss_r << "\n";
+        std::cout << 1000-z_start << ", " << pathloss_w << ", " << pathloss << "\n";
+        // std::cout << fspl << "\n";
+        
     }
+
+
+    if (render_image)
+    {
+        // camera
+        camera cam(lookfrom, lookat, vec3(0,1,0), vfov, aspect_ratio);
+        // Render
+        std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+        auto millisec_start = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+        for (int j = image_height-1; j >= 0; --j)
+        {
+            std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+            for (int i = 0; i < image_width; ++i)
+            {
+                color pixel_color(0,0,0);
+                for (int s=0; s < samples_per_pixel; s++)
+                {
+                    // auto u = (i+random_double(0,0.01)) / (image_width-1);
+                    // auto v = (j+random_double(0,0.01)) / (image_height-1);
+                    auto u = (i+random_double(0,0.99)) / (image_width-1);
+                    auto v = (j+random_double(0,0.99)) / (image_height-1);
+                    ray r = cam.get_ray(u, v);
+                    bounce_hist ray_history;
+                    
+                    pixel_color += ray_color(r, background, world, max_depth, &ray_history);
+
+                    if (print_ray_history) {  
+                        if (ray_history.hit_points.size() > 0)
+                        {
+                            if (ray_history.hit_points.at(ray_history.hit_points.size()-1).is_source == true)
+                            {  
+                                point_bool camera_loc;
+                                camera_loc.hit = lookfrom;
+                                camera_loc.is_source = false;
+                                std::vector<point_bool>::iterator it;
+                                it = ray_history.hit_points.begin();
+                                ray_history.hit_points.insert(it, camera_loc);
+                                for (const auto& hit_point : ray_history.hit_points)
+                                {
+                                    std::cout << " hit p = " << hit_point.hit << " source? = " << hit_point.is_source << " " << std::endl;
+                                }                
+                                std::cout << "path length = " << path_length(ray_history) << '\n' << std::endl;
+                            }
+                        } 
+                    }
+                    // std::cout << "||";        
+                }
+                // std::cout << '\n';
+                write_color(std::cout, pixel_color, samples_per_pixel);
+            }
+            // std::cout << '\n';
+        }
+        auto millisec_stop = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+        std::cerr << "\nDone.\nRays shot = "
+                    << image_height * image_width * samples_per_pixel
+                    << "\nDuration in ms = "
+                    << millisec_stop - millisec_start 
+                    << std::endl;
+    } // end -> if (render_image) 
+
+
 
 }
