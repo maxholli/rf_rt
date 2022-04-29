@@ -148,10 +148,10 @@ int main(int argc, char** argv)
 
     double receive_center_z = std::stod(argv[1]);
     double ground_dist = receive_center_z;
-    double receiver_height = 2.5;
+    double receiver_height = 5;
     double transmit_height = 50;
     double LOS_dist = sqrt(pow(ground_dist,2) + pow(transmit_height-receiver_height,2));
-    double radius_scale_factor = 100;
+    double radius_scale_factor = 200;
     double r_frac = sqrt(1/M_PI)/radius_scale_factor;
     //double receive_radius = sqrt(1/M_PI);
     double receive_radius = r_frac*LOS_dist;
@@ -161,10 +161,10 @@ int main(int argc, char** argv)
         case 0:
             world = ground_only(receive_center_z, receive_radius, receiver_height);
             background = color(0,0,0);
-            lookfrom = point3(0, 50, 0);
+            lookfrom = point3(0, transmit_height, 0);
             lookat = point3(0, 0, 10);
             antenna_lookfrom = lookfrom;
-            num_rf_rays = 2e7;
+            num_rf_rays = 1e9;
             // num_rf_rays = 300000000;
             break;
     }
@@ -303,7 +303,7 @@ int main(int argc, char** argv)
         std::cerr << "Path Loss whole numbers" << pathloss_w << "\n";
         // double pathloss_r = (-10.0 * log10(rQ)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
         // std::cerr << "Path Loss reals" << pathloss_r << "\n";
-        std::cout << ground_dist << ", " << pathloss_w << ", " << pathloss << "\n";
+        std::cout << ground_dist << ", " << LOS_dist << ", " << pathloss_w << ", " << pathloss << "\n";
 
 
         // Q = Q / num_rf_rays;

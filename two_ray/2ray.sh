@@ -12,3 +12,7 @@ for i in {255..600..5}
 do
     ./two_ray.exe $i >> output.txt
 done
+for i in {610..1000..10}
+do
+    ./two_ray.exe $i >> output.txt
+done
