@@ -141,7 +141,7 @@ int main(int argc, char** argv)
     point3 lookfrom;
     point3 lookat;
     point3 antenna_lookfrom;
-    double f = 300000000;
+    double f = 900000000;
 
     color background = color(0.70, 0.80, 1.00); // default light blue
     // color background = color(0, 0, 0);
@@ -151,6 +151,7 @@ int main(int argc, char** argv)
     double receiver_height = 5;
     double transmit_height = 50;
     double LOS_dist = sqrt(pow(ground_dist,2) + pow(transmit_height-receiver_height,2));
+    double bounce_dist = sqrt(pow(ground_dist,2) + pow(transmit_height+receiver_height,2));
     double radius_scale_factor = 200;
     double r_frac = sqrt(1/M_PI)/radius_scale_factor;
     //double receive_radius = sqrt(1/M_PI);
@@ -245,7 +246,8 @@ int main(int argc, char** argv)
                 } 
             }
         }
-        double modifier = 0.564189584 * 0.679;
+        // double modifier = 0.564189584 * 0.679;
+        double modifier = LOS_dist * (1.0/(2.666*radius_scale_factor)); // 267 for scale factor 100, 537 for 200, 802 for 300
         double leng_1 = ave_1_leng/hit_1_count + modifier;
         double leng_2 = ave_2_leng/hit_2_count + modifier;
         double psi_rad = ave_psi/hit_2_count;
@@ -253,9 +255,9 @@ int main(int argc, char** argv)
         // std::cerr << argv[1] << "\n";
         std::cerr << "average psi " << psi_rad << "\n";
         std::cerr << "LOS hits " << hit_1_count << "\n";
-        std::cerr << "LOS ray length " << leng_1 << "\n";
+        std::cerr << "LOS ray length estm, " << leng_1 << ", actual " << LOS_dist << "\n";
         std::cerr << "Bounce hits " << hit_2_count << "\n";
-        std::cerr << "Bounce ray length " << leng_2 << "\n";
+        std::cerr << "Bounce ray length estm, " << leng_2 << ", actual " << bounce_dist << "\n";
     
 
         double epsilon = ground_properties.x(); // dielectric constant of the ground

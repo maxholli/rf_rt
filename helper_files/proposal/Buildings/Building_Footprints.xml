@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?><metadata>
+    <idinfo>
+        <citation>
+            <citeinfo>
+                <origin/>
+                <pubdate>20200917</pubdate>
+                <title>Buildings</title>
+            </citeinfo>
+        </citation>
+        <descript>
+            <abstract>Building layer constructed from DRCOG 2016 roofprints and, where needed, older City data building footprints.Not to be used for addressing or other specialized functions. Use more topic-specific data instead.The FacilityID field is unique across the data, while the DRCOG ID will duplicate in cases where a building is shown as multiple polygons.</abstract>
+            <purpose>Buildings in the City of Boulder.</purpose>
+        </descript>
+        <status>
+            <update>Annually</update>
+        </status>
+        <keywords>
+            <theme>
+                <themekt>None</themekt>
+                <themekey>colorado</themekey>
+                <themekey>building</themekey>
+                <themekey>boulder</themekey>
+                <themekey>city of boulder</themekey>
+                <themekey>footprint</themekey>
+                <themekey>roofprint</themekey>
+                <themekey>co</themekey>
+                <themekey>open data</themekey>
+            </theme>
+        </keywords>
+        <accconst>None</accconst>
+        <useconst>https://creativecommons.org/publicdomain/zero/1.0/</useconst>
+    </idinfo>
+    <spdoinfo>
+        <ptvctinf>
+            <sdtsterm>
+                <ptvctcnt>45776</ptvctcnt>
+            </sdtsterm>
+        </ptvctinf>
+    </spdoinfo>
+    <eainfo>
+        <detailed>
+            <enttyp>
+                <enttypl>PW.Buildings</enttypl>
+            </enttyp>
+            <attr>
+                <attrlabl>LONGNAME</attrlabl>
+                <attrdef>LongName</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>CASEID</attrlabl>
+                <attrdef>CaseID</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>DRCOGID</attrlabl>
+                <attrdef>DRCOGID</attrdef>
+                <attrdefs>DRCOG</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>CITYLIMIT</attrlabl>
+                <attrdef>City Limit</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>MAINTBY</attrlabl>
+                <attrdef>Maint by</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>BLDGTYPE</attrlabl>
+                <attrdef>Building Type</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>FLOORCOUNT</attrlabl>
+                <attrdef>FloorCount</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>SHORTNAME</attrlabl>
+                <attrdef>ShortName</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>LIFECYCLE</attrlabl>
+                <attrdef>Lifecycle</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>CONFIDENCE</attrlabl>
+                <attrdef>Confidence</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>OCCUPIEDBY</attrlabl>
+                <attrdef>Occupied by</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>SHAPE</attrlabl>
+                <attrdef>Feature geometry.</attrdef>
+                <attrdefs>Esri</attrdefs>
+                <attrdomv>
+                                        					
+                    
+                    <udom>Coordinates defining the features.</udom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>GLOBALID</attrlabl>
+                <attrdef>Global ID</attrdef>
+                <attrdefs>Esri</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>SHAPE.AREA</attrlabl>
+                <attrdef>Shape Area</attrdef>
+                <attrdefs>Esri</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>FACILITYID</attrlabl>
+                <attrdef>FacilityID</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>UTILITYCRITICAL</attrlabl>
+                <attrdef>Utility critical</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>FLOOD100</attrlabl>
+                <attrdef>Flood 100</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>FLOODCONV</attrlabl>
+                <attrdef>Flood Conv</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>ELEVCERT</attrlabl>
+                <attrdef>Elevation Certificate</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>FLOOD500</attrlabl>
+                <attrdef>Flood 500</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>GROUNDELEV</attrlabl>
+                <attrdef>Ground Elevation</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>HISTORIC</attrlabl>
+                <attrdef>Historic</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>CRITICALITY</attrlabl>
+                <attrdef>Criticality</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>OWNEDBY</attrlabl>
+                <attrdef>Owned By</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>SHAPE.LEN</attrlabl>
+                <attrdef>shape length</attrdef>
+                <attrdefs>Esri</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>LAST_EDITED_DATE</attrlabl>
+                <attrdef>last edited date</attrdef>
+                <attrdefs>Esri</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>CREATED_DATE</attrlabl>
+                <attrdef>Created Date</attrdef>
+                <attrdefs>Esri</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>LAST_EDITED_USER</attrlabl>
+                <attrdef>last edited user</attrdef>
+                <attrdefs>Esri</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>BLDGHEIGHT</attrlabl>
+                <attrdef>Building Height</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>DWELLTYPE</attrlabl>
+                <attrdef>Dwelling Type</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>ACCESSTYPE</attrlabl>
+                <attrdef>Access Type</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>FLOODHHZ</attrlabl>
+                <attrdef>Flood high hazard</attrdef>
+                <attrdefs>City of Boulder</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>CREATED_USER</attrlabl>
+                <attrdef>created user</attrdef>
+                <attrdefs>Esri</attrdefs>
+            </attr>
+            <attr>
+                <attrlabl>OBJECTID</attrlabl>
+                <attrdef>Internal feature number.</attrdef>
+                <attrdefs>Esri</attrdefs>
+                <attrdomv>
+                                        					
+                    
+                    <udom>Sequential unique whole numbers that are automatically generated.</udom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+        </detailed>
+    </eainfo>
+    <metainfo>
+        <metd>20181107</metd>
+        <metc>
+            <cntinfo>
+                <!--no contact person or organization name available-->
+            </cntinfo>
+        </metc>
+        <metstdn>FGDC Content Standard for Digital Geospatial Metadata</metstdn>
+        <metstdv>FGDC-STD-001-1998</metstdv>
+        <mettc>local time</mettc>
+    </metainfo>
+</metadata>
