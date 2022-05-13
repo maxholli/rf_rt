@@ -1,31 +1,37 @@
 ### How to generate ray tracing 3D environment from Shapefile buildings
 
-Start by downloading the shape file for Boulder buildings. This will give you 6 files. Building_Footprints.cpg .dbf .prj .shp .shx .xml. 
+Start by downloading the shape file for Boulder buildings. 
+
+https://data-boulder.opendata.arcgis.com/datasets/0d43652d038a4a0dbca68f0501151bb0_0/explore?
+
+This will give you 6 files. Building_Footprints.cpg .dbf .prj .shp .shx .xml. 
 
 Download triangle.zip from https://www.cs.cmu.edu/~quake/triangle.html
 
 ```
 mkdir holey_Bs
 mv triangle.zip holey_Bs
+cd holey_Bs
 unzip triangle.zip
 make
+cd ..
 mkdir Buildings
 mv Building_* Buildings/
 ```
 
-Start with bldr_shape_to_obj.py and put the building DRCOGID in the select_buildings list. And make sure the full path is correct to holey_Bs.
+Start with bldr_shape_to_obj.py and put the desired building DRCOGID in the select_buildings list. And make sure the full path is correct to holey_Bs.
 
 ```
 pip3 install pyshp
 python3 bldr_shape_to_obj.py Buildings/Building_Footprints.shp --output output_file.obj
 ```
 
-The .obj is enought for the GPU ray tracer. If you're using the CPU ray tracer you need to keep going.
+The .obj is enough for the GPU ray tracer. If you're using the CPU ray tracer you need to keep going.
 
-Change the filename variable in obj_to_CPUraytracer.py to match the output_file.obj you just created.
+Change the filename variable in `obj_to_CPUraytracer.py` to match the output_file.obj you just created.
 
 ```
 python3 obj_to_CPUraytracer.py > output_file.txt
 ```
 
-Then copy this into a file in the worlds/ directory of your ray tracer. Check out rf_rt/proposal/worlds/proposal.h for an example. This file need to be #include'd in your main.cpp ray tracing file and then read in as the world.
+Then copy the contents of `output_file.txt` into a file in the `worlds/` directory of your ray tracer. Check out `rf_rt/proposal/worlds/proposal.h` for an example. This file needs to be included `#include proposal.h` in your `main.cpp` ray tracing file and then read in as the world.
