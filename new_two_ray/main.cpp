@@ -1,3 +1,5 @@
+// TWO RAY
+
 #include "headers/rtweekend.h"
 
 #include "headers/color.h"
@@ -165,7 +167,7 @@ int main(int argc, char** argv)
             lookfrom = point3(0, transmit_height, 0);
             lookat = point3(0, 0, 10);
             antenna_lookfrom = lookfrom;
-            num_rf_rays = 1e8;
+            num_rf_rays = 1e6;
             // num_rf_rays = 300000000;
             break;
     }
@@ -218,16 +220,16 @@ int main(int argc, char** argv)
                         std::vector<point_bool>::iterator it;
                         it = ray_history.hit_points.begin();
                         ray_history.hit_points.insert(it, camera_loc);
-                        // for (const auto& hit_point : ray_history.hit_points) 
-                        // {
-                        //     std::cout << " hit p = " << hit_point.hit << " source? = " << hit_point.is_source << " " << std::endl;
-                        // }
-                        // int num_points_in_path = static_cast<int>(ray_history.hit_points.size());
+                        for (const auto& hit_point : ray_history.hit_points) 
+                        {
+                            std::cout << " hit p = " << hit_point.hit << " source? = " << hit_point.is_source << " " << std::endl;
+                        }
+                        int num_points_in_path = static_cast<int>(ray_history.hit_points.size());
        
-                        // float cur_path_length = path_length(ray_history);
+                        float cur_path_length = path_length(ray_history);
                         // av_path_length = av_path_length + cur_path_length;
-                        // std::cout << "path length = " << cur_path_length << std::endl;
-                        // std::cout << "initial direction = " << r.dir.x() << " " << r.dir.y() << " " << r.dir.z() << '\n' << std::endl;
+                        std::cout << "path length = " << cur_path_length << std::endl;
+                        std::cout << "initial direction = " << r.dir.x() << " " << r.dir.y() << " " << r.dir.z() << '\n' << std::endl;
                         if (ray_history.hit_points.size() == 2)
                         {
                             // LOS rays

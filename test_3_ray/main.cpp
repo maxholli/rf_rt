@@ -13,14 +13,7 @@
 #include "headers/aabb.h"
 #include "headers/bvh.h"
 
-// #include "worlds/norlin_quad.h"
-// #include "worlds/norlin_quad_rf.h"
-// #include "worlds/floating_square.h"
-// #include "worlds/floating_triangle.h"
-// // #include "worlds/cornell_box.h"
-// #include "worlds/three_marbles_worship.h"
-#include "worlds/empty.h"
-#include "worlds/ground_only.h"
+#include "worlds/ground_wall.h"
 
 #include <iostream>
 #include <string>
@@ -152,6 +145,7 @@ int main(int argc, char** argv)
     double transmit_height = 50;
     double LOS_dist = sqrt(pow(ground_dist,2) + pow(transmit_height-receiver_height,2));
     double bounce_dist = sqrt(pow(ground_dist,2) + pow(transmit_height+receiver_height,2));
+    double wall_bounce_dist = sqrt(pow(10+10, 2) + pow(sqrt(pow(transmit_height-receiver_height,2) + pow(ground_dist,2)), 2));
     double radius_scale_factor = 200;
     double r_frac = sqrt(1/M_PI)/radius_scale_factor;
     //double receive_radius = sqrt(1/M_PI);
@@ -160,12 +154,12 @@ int main(int argc, char** argv)
     switch (0)
     {
         case 0:
-            world = ground_only(receive_center_z, receive_radius, receiver_height);
+            world = ground_wall(receive_center_z, receive_radius, receiver_height);
             background = color(0,0,0);
             lookfrom = point3(0, transmit_height, 0);
             lookat = point3(0, 0, 10);
             antenna_lookfrom = lookfrom;
-            num_rf_rays = 1e8;
+            num_rf_rays = 1e9;
             // num_rf_rays = 300000000;
             break;
     }
@@ -184,9 +178,12 @@ int main(int argc, char** argv)
         
         int hit_1_count = 0;
         int hit_2_count = 0;
+        int hit_3_count = 0;
         float ave_1_leng = 0;
         float ave_2_leng = 0;
-        double ave_psi = 0;
+        float ave_3_leng = 0;
+        double ave_2_psi = 0;
+        double ave_3_psi = 0;
         color ground_properties(0,0,0);
         
         for (uint64_t i = 0; i < num_rf_rays; i++)
@@ -196,12 +193,12 @@ int main(int argc, char** argv)
             color pixel_color(0,0,0);
             // do another for loop here for samples per pixel
             ray r = antenna.get_ray();
-                
+            // limit the number of rays that need to be explored
             if (r.dir.y() > 0.002)
                 continue;
             if (r.dir.z() < -0.005)
                 continue;
-            if (r.dir.x() < -0.23 || r.dir.x() > 0.23 )
+            if (r.dir.x() < -0.23 || r.dir.x() > 1.58 )
                 continue;
             bounce_hist ray_history;
 
@@ -237,10 +234,20 @@ int main(int argc, char** argv)
                         else if (ray_history.hit_points.size() == 3)
                         {
                             // Ground bounce rays
-                            hit_2_count++;
-                            ave_2_leng = ave_2_leng + path_length(ray_history);
-                            ground_properties = pixel_color;
-                            ave_psi = ave_psi + ray_history.hit_points[1].psi;
+                            if (pixel_color.z() == 1.0)
+                            {
+                                hit_2_count++;
+                                ave_2_leng = ave_2_leng + path_length(ray_history);
+                                ground_properties = pixel_color;
+                                ave_2_psi = ave_2_psi + ray_history.hit_points[1].psi;
+                            }
+                            else if (pixel_color.z() == 2.0)
+                            {
+                                hit_3_count++;
+                                ave_3_leng = ave_3_leng + path_length(ray_history);
+                                ground_properties = pixel_color;
+                                ave_3_psi = ave_3_psi + ray_history.hit_points[1].psi;
+                            }
                         }
                     }
                 } 
@@ -250,14 +257,18 @@ int main(int argc, char** argv)
         double modifier = LOS_dist * (1.0/(2.666*radius_scale_factor)); // 267 for scale factor 100, 537 for 200, 802 for 300
         double leng_1 = ave_1_leng/hit_1_count + modifier;
         double leng_2 = ave_2_leng/hit_2_count + modifier;
-        double psi_rad = ave_psi/hit_2_count;
+        double psi_rad = ave_2_psi/hit_2_count;
+        double leng_3 = ave_3_leng/hit_3_count + modifier;
+        double psi_3_rad = ave_3_psi/hit_3_count;
         std::cerr << "\nDone.\n";
         // std::cerr << argv[1] << "\n";
         std::cerr << "average psi " << psi_rad << "\n";
         std::cerr << "LOS hits " << hit_1_count << "\n";
         std::cerr << "LOS ray length estm, " << leng_1 << ", actual " << LOS_dist << "\n";
-        std::cerr << "Bounce hits " << hit_2_count << "\n";
+        std::cerr << "Bounce ground hits " << hit_2_count << "\n";
+        std::cerr << "Bounce wall hits " << hit_3_count << "\n";
         std::cerr << "Bounce ray length estm, " << leng_2 << ", actual " << bounce_dist << "\n";
+        std::cerr << "Bounce wall ray length estm, " << leng_3 << ", actual " << wall_bounce_dist << "\n";
     
 
         double epsilon = ground_properties.x(); // dielectric constant of the ground
@@ -270,7 +281,13 @@ int main(int argc, char** argv)
         std::complex<double> rnum = comp_part * sin(psi_rad) - sqrt(comp_part - pow(cos(psi_rad),2));
         std::complex<double> rden = comp_part * sin(psi_rad) + sqrt(comp_part - pow(cos(psi_rad),2));
         std::complex<double> rho_v = rnum / rden;
-        std::cerr << "reflection coefficient " << rho_v << "\n";
+        std::cerr << "ground reflection coefficient " << rho_v << "\n";
+
+        // added the reflection coefficient for the wall bounce
+        std::complex<double> rnum_3 = sin(psi_3_rad) - sqrt(comp_part - pow(cos(psi_3_rad),2));
+        std::complex<double> rden_3 = sin(psi_3_rad) + sqrt(comp_part - pow(cos(psi_3_rad),2));
+        std::complex<double> rho_v_3 = rnum_3 / rden_3;
+        std::cerr << "wall reflection coefficient " << rho_v_3 << "\n";
 
         double delta_d = leng_2 - leng_1;
         double lamb = 300000000 / f;
@@ -279,11 +296,25 @@ int main(int argc, char** argv)
         std::complex<double> ce_phi = cos(delta_phi) - 1i*sin(delta_phi);
         std::cerr << "phase contribution mag " << sqrt(pow(real(ce_phi),2)+pow(imag(ce_phi),2)) << "\n";
 
+        // phase contribution for wall bounce
+        double delta_d_3 = leng_3 - leng_1;
+        double delta_phi_3 = (2 * M_PI / lamb) * delta_d_3;
+        std::cerr << "wall phase difference, radians " << delta_phi_3 << "\n";
+        std::complex<double> ce_phi_3 = cos(delta_phi_3) - 1i*sin(delta_phi_3);
+        std::cerr << "wall phase contribution mag " << sqrt(pow(real(ce_phi_3),2)+pow(imag(ce_phi_3),2)) << "\n";
+
         std::complex<double> change_E = 1.0 + 0.0i;
-        change_E = change_E + rho_v * ce_phi;
+        change_E = change_E + (rho_v * ce_phi);
         std::cerr << "change E " << change_E <<  "\n";
         double change_P = pow(real(change_E),2)+ pow(imag(change_E),2);
         std::cerr << "change P " << change_P <<  "\n";
+
+        std::complex<double> change_E_3 = 1.0 + 0.0i;
+        change_E_3 = change_E_3 + (rho_v_3 * ce_phi_3);
+        std::cerr << "change E wall " << change_E_3 <<  "\n";
+        double change_P_3 = pow(real(change_E_3),2)+ pow(imag(change_E_3),2);
+        std::cerr << "change P wall " << change_P_3 <<  "\n";
+
 
         double Q = hit_1_count;
         Q = Q / num_rf_rays;
@@ -297,15 +328,21 @@ int main(int argc, char** argv)
         int refl_cont_whole = round(refl_contribution);
         // double rQ = hit_1_count + refl_contribution;
         nQ = nQ + refl_cont_whole;
-
         nQ = nQ / num_rf_rays;
         // rQ = rQ / num_rf_rays;
         nQ = nQ/(pow(LOS_dist,2)/pow(radius_scale_factor,2));
         double pathloss_w = (-10.0 * log10(nQ)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
         std::cerr << "Path Loss whole numbers" << pathloss_w << "\n";
-        // double pathloss_r = (-10.0 * log10(rQ)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
-        // std::cerr << "Path Loss reals" << pathloss_r << "\n";
-        std::cout << ground_dist << ", " << LOS_dist << ", " << pathloss_w << ", " << pathloss << "\n";
+        
+        double nQ2 = hit_1_count;
+        double refl_contribution_3 = (change_P_3 - 1.0) * hit_3_count;
+        int refl_cont_3 = round(refl_contribution_3);
+        nQ2 = nQ2 + refl_cont_whole + refl_cont_3;
+        nQ2 = nQ2 / num_rf_rays;
+        nQ2 = nQ2/(pow(LOS_dist,2)/pow(radius_scale_factor,2));
+        double pathloss_3 = (-10.0 * log10(nQ2)) + (10 * log10(4*M_PI)) + (20 * log10(f/300000000));
+
+        std::cout << ground_dist << ", " << LOS_dist << ", " << pathloss_w << ", " << pathloss_3 << ", " << pathloss << "\n";
 
 
         // Q = Q / num_rf_rays;

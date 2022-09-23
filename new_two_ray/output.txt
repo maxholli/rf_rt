@@ -1,0 +1,33 @@
+ hit p = 0, 50, 0 source? = 0 
+ hit p = -0.165583, 4.82155, 249.326 source? = 1 
+path length = 253.386
+initial direction = -0.000653482 -0.178299 0.983976
+
+ hit p = 0, 50, 0 source? = 0 
+ hit p = -0.528081, 0, 227.221 source? = 0 
+ hit p = -0.580061, 4.92164, 249.587 source? = 1 
+path length = 255.559
+initial direction = -0.00226978 -0.214908 0.976632
+
+ hit p = 0, 50, 0 source? = 0 
+ hit p = 0.448778, 5.11727, 249.454 source? = 1 
+path length = 253.46
+initial direction = 0.00177061 -0.17708 0.984195
+
+ hit p = 0, 50, 0 source? = 0 
+ hit p = -0.228344, 0, 224.985 source? = 0 
+ hit p = -0.253227, 5.44862, 249.502 source? = 1 
+path length = 255.589
+initial direction = -0.000990758 -0.216944 0.976183
+
+ hit p = 0, 50, 0 source? = 0 
+ hit p = 0.0261454, 4.51499, 249.473 source? = 1 
+path length = 253.586
+initial direction = 0.000103103 -0.179367 0.983782
+
+ hit p = 0, 50, 0 source? = 0 
+ hit p = -0.357519, 5.59133, 249.81 source? = 1 
+path length = 253.727
+initial direction = -0.00140907 -0.175025 0.984563
+
+250, 254.018, 76.5906, 76.5906
