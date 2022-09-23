@@ -39,6 +39,7 @@ basic_graphic/output_images/*
 basic_rf/output_images/*
 OneWeekendGPU/build/*
 OneWeekendGPU/models/*
+new_free_space/*.txt
 
 .ipynb_checkpoints
 .pyc

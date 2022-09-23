@@ -178,7 +178,7 @@ int main(int argc, char** argv)
             lookfrom = point3(0, transmit_height, 0);
             lookat = point3(0, 0, 10);
             antenna_lookfrom = lookfrom;
-            num_rf_rays = 0.5e8;
+            num_rf_rays = std::stoull(argv[2]);
             // num_rf_rays = 300000000;
             break;
     }
@@ -293,7 +293,9 @@ int main(int argc, char** argv)
                         {
                             for (const auto& hit_point : ray_history.hit_points)
                             {
-                                uni_ground_d[ray_path_str].push_back(hit_point.ground_const);
+                                int surface_id = static_cast<int>(hit_point.ground_const.z());
+                                if (surface_id != 0) // 0 is the TX point
+                                    uni_ground_d[ray_path_str].push_back(hit_point.ground_const);
                             }
                         }
                         
@@ -447,6 +449,47 @@ int main(int argc, char** argv)
         {
             if (avr_itr->first == "3,2,1,")
                 continue;
+
+            // figure out Rho here
+            double mag_rho_product = 1;
+            double pha_rho_sum = 0;
+            std::cerr << "calculating RHO for path " << avr_itr->first << " num hops " << avr_psi_d[avr_itr->first].size() << '\n';
+            for (int i = 0; i < avr_psi_d[avr_itr->first].size()-1; i++) // w/o the -1 you go to the RX hit which doesn't have a RHO
+            {
+                std::cerr << "sigma " << uni_ground_d[avr_itr->first][i].y() << '\n';
+                std::cerr << "epsilon " << uni_ground_d[avr_itr->first][i].x() << '\n';
+                std::cerr << "average PSI " << avr_psi_d[avr_itr->first][i] << '\n';
+                double epsilon = uni_ground_d[avr_itr->first][i].x(); // dielectric constant of the ground
+                double sigma = uni_ground_d[avr_itr->first][i].y(); // conductivity of the ground
+                double psi_rad = avr_psi_d[avr_itr->first][i];
+                double x = sigma / (omega * epsilon_fs);
+                std::complex<double> comp_part = epsilon - 1i*x;
+
+
+                std::complex<double> rnum = 0.0 + 0.0i;
+                std::complex<double> rden = 0.0 + 0.0i;
+                // horizontal surfaces have EVEN surface_id (therefore use vertical polarization)
+                // vertical surfaces have ODD surface_id (therefore use horizontal)
+                int surface_id = static_cast<int>(uni_ground_d[avr_itr->first][i].z());
+                if (surface_id % 2 == 0) // horizontal surface, so use vertical polarization
+                {
+                    rnum = comp_part * sin(psi_rad) - sqrt(comp_part - pow(cos(psi_rad),2));
+                    rden = comp_part * sin(psi_rad) + sqrt(comp_part - pow(cos(psi_rad),2));
+                }
+                else
+                {
+                    rnum = sin(psi_rad) - sqrt(comp_part - pow(cos(psi_rad),2));
+                    rden = sin(psi_rad) + sqrt(comp_part - pow(cos(psi_rad),2));
+                }
+                std::complex<double> rho_v = rnum / rden;
+                std::cerr << "reflection coefficient " << rho_v << "\n";
+                double mag_rho = sqrt(pow(real(rho_v),2) + pow(imag(rho_v),2));
+                double pha_rho = -1*acos(real(rho_v) / mag_rho);
+                mag_rho_product = mag_rho_product * mag_rho; // product up the magnitudes
+                pha_rho_sum = pha_rho_sum + pha_rho; // sum up the phases 
+            }
+
+            // figure out arrival phase
             double r_len = 0;
             point3 cur_point = antenna_lookfrom;
             for (const auto& npoint : avr_itr->second)
@@ -456,30 +499,17 @@ int main(int argc, char** argv)
                 cur_point = npoint;
             }
             std::cerr << "len = " << r_len << '\n';
-            double phi = (r_len / lamb) * 2*M_PI;
+            double phi = (r_len / lamb) * 2*M_PI + pha_rho_sum;
             std::complex<double> comp_phase = cos(phi) + 1i*sin(phi);
             total_phase1 = total_phase1 + comp_phase;
             std::cerr << "complex_phase = " << comp_phase << std::endl;
             std::cerr << "ray count = " << ray_path_hits_d[avr_itr->first] << std::endl;
             std::cerr << std::endl;
 
-            // figure out Rho here
-            std::cerr << "calculating RHO for path " << avr_itr->first << " num hops " << avr_psi_d[avr_itr->first].size() << '\n';
-            for (int i = 0; i < avr_psi_d[avr_itr->first].size(); i++)
-            {
-                std::cerr << "sigma " << uni_ground_d[avr_itr->first][i].x() << '\n';
-                std::cerr << "epsilon " << uni_ground_d[avr_itr->first][i].y() << '\n';
-                std::cerr << "average PSI " << avr_psi_d[avr_itr->first][i] << '\n';
-            }
-
-            // double x = sigma / (omega * epsilon_fs);
-
-            // do the math
+            // figure out the arrival amplitude
             // phi is the phase
-            // double Q = ray_path_hits_d[avr_itr->first] / num_rf_rays;
             double Qinv = num_rf_rays / ray_path_hits_d[avr_itr->first];
-            // Q = Q/(pow(LOS_dist,2)/pow(radius_scale_factor,2));
-            double amp = lamb * (1/(4*M_PI*sqrt(Qinv/(4*M_PI))));
+            double amp = lamb * (1/(4*M_PI*sqrt(Qinv/(4*M_PI)))) * mag_rho_product;
             std::complex<double> ray_cluster = amp * cos(phi) + amp * 1i*sin(phi);
             ray_snapshot = ray_snapshot + ray_cluster;
         }
