@@ -42,3 +42,4 @@ OneWeekendGPU/models/*
 
 .ipynb_checkpoints
 .pyc
+.vscode
