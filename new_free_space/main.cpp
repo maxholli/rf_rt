@@ -447,8 +447,8 @@ int main(int argc, char** argv)
         std::map<std::string, std::vector<point3>>::iterator avr_itr;
         for (avr_itr = avr_segment_d.begin(); avr_itr != avr_segment_d.end(); ++avr_itr)
         {
-            if (avr_itr->first == "3,2,1,")
-                continue;
+            // if (avr_itr->first == "3,2,1,")
+            //     continue;
 
             // figure out Rho here
             double mag_rho_product = 1;

@@ -40,6 +40,17 @@ basic_rf/output_images/*
 OneWeekendGPU/build/*
 OneWeekendGPU/models/*
 new_free_space/*.txt
+helper_files/*.tin.tif
+helper_files/*.txt
+helper_files/boulder_campus/terrain/*.txt
+helper_files/boulder_campus/terrain/*.tin.tif
+
+*.shp
+*.cpg
+*.dbf
+*.prj
+*.shx
+*.xml
 
 .ipynb_checkpoints
 .pyc
