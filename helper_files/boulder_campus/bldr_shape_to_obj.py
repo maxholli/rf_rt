@@ -7,6 +7,74 @@ from write_poly_file import write_poly_file
 from write_poly_file import read_ele_node
 from copy import copy
 import os
+import rasterio
+
+def find_middle(points):
+    max_lat = points[0][1] ## north
+    max_long = points[0][0] ## east
+    min_lat = points[0][1] ## south
+    min_long = points[0][0] ## west
+    for vert in points:
+        if vert[0] < min_long:
+            min_long = vert[0]
+        if vert[0] > max_long:
+            max_long = vert[0]
+        if vert[1] < min_lat:
+            min_lat = vert[1]
+        if vert[1] > max_lat:
+            max_lat = vert[1]
+    ave_lat = (max_lat + min_lat) / 2
+    ave_long = (max_long + min_long) / 2
+    return (ave_long, ave_lat)
+
+def find_nearest_ground_elev(pband1, row, col):
+    cr_dist = 501
+    c_right = -9999.0
+    for cr in range(500):
+        try:
+            if pband1[row,col+cr] != -9999.0:
+                c_right = pband1[row,col+cr]
+                cr_dist = cr
+                break
+        except IndexError:
+            break
+    cd_dist = 501
+    c_down = -9999.0
+    for cd in range(500):
+        try:
+            if pband1[row+cd,col] != -9999.0:
+                c_down = pband1[row+cd,col]
+                cd_dist = cd
+                break
+        except IndexError:
+            break
+    cl_dist = 501
+    c_left = -9999.0
+    for cl in range(500):
+        if col-cl < 0:
+            break
+        elif pband1[row,col-cl] != -9999.0:
+            c_left = pband1[row,col-cl]
+            cl_dist = cl
+            break
+    cu_dist = 501
+    c_up = -9999.0
+    for cu in range(500):
+        if row-cu < 0:
+            break
+        elif band1[row-cu,col] != -9999.0:
+            c_up = pband1[row-cu,col]
+            cu_dist = cu
+            break
+    # print(c_right, cr_dist, c_down, cd_dist, c_left, cl_dist, c_up, cu_dist)
+    heights = [c_right, c_down, c_left, c_up]
+    dists = [cr_dist, cd_dist, cl_dist, cu_dist]
+    all_9999 = True
+    if max(heights) == -9999.0:
+        print("ERROR: STOP NOW AND INSPECT")
+        print("ERROR: there's no terrain within 500m of the building to base the ground_elev on")
+    nearest_grnd = heights[dists.index(min(dists))]
+    return nearest_grnd
 
 # # # shape files have two parts. Geometry and Records
 # Geometry is as the following:
@@ -27,8 +95,13 @@ import os
 # among other things
 # sf.fields to see record types
 
-lat_deg = 110950
-long_deg = 85000
+# lat_deg = 110950
+# long_deg = 85000
+## from haversine formula on 
+## https://stackoverflow.com/questions/639695/how-to-convert-latitude-or-longitude-to-meters
+lat_deg = 111319.49
+long_deg = 85263.24
+
 
 building_low = 0
 building_high = 15
@@ -85,6 +158,23 @@ select_buildings = [971604, 971606, 974534] #hellems
 bad_buildings = []
 
 
+# ## for new_hellems_arap
+# ## chosen lower left base my 0m, 0m orientation on
+# common_0_long_lat = (-105.27487, 40.00596)
+# ## epsg format (bottom, left)
+# common_0_epsg32613 =  (476539.20360535086, 4428454.898455279)
+# terrain_dataset = rasterio.open("terrain/new_hellems_arap_1m.tin.tif")
+# band1 = terrain_dataset.read(1)
+
+## for full summer
+## chosen lower left base my 0m, 0m orientation on
+common_0_long_lat = (-105.2850, 39.9834)
+## epsg format (bottom, left)
+common_0_epsg32613 =  (475666.5780654502, 4425953.671688922)
+terrain_dataset = rasterio.open("terrain/full_summer_1m.tin.tif")
+band1 = terrain_dataset.read(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description="shapefile dataset please")
     parser.add_argument("shapefile_f", nargs="?")
@@ -116,11 +206,22 @@ def main():
     a_building_id = []
     a_holey_building = []
     for i in range(len(shapes)):
-        # if rec[i]['DRCOGID'] not in bad_buildings:
-        if rec[i]['DRCOGID'] not in bad_buildings and rec[i]['DRCOGID'] in select_buildings:
-        # if True:
+        if True:
+        # if rec[i]['DRCOGID'] in select_buildings:
             # print("Building is {}".format(rec[i]['DRCOGID']))
             # print(shapes[i].points)
+            middle_point_of_b = find_middle(shapes[i].points)
+            # print(middle_point_of_b)
+            z_meters = (middle_point_of_b[0] - common_0_long_lat[0]) * long_deg
+            x_meters = (middle_point_of_b[1] - common_0_long_lat[1]) * lat_deg
+            # print(x_meters, z_meters)
+            # print(x_meters + common_0_epsg32613[1], z_meters + common_0_epsg32613[0])
+            row, col = terrain_dataset.index(z_meters + common_0_epsg32613[0], x_meters + common_0_epsg32613[1])
+            ground_elev = band1[row,col] ## if this fails it probably means you have buildings that are outside of the terrain
+            # print(ground_elev)
+            if ground_elev == -9999.0:
+                ground_elev = find_nearest_ground_elev(band1, row, col)
+            # print("new ground elev = ", ground_elev)          
             # print("-----------------------")
             # print(shapes[i].parts)
             tmp = []
@@ -131,11 +232,9 @@ def main():
             else:
                 a_holey_building.append(False)
             tmp_vertex_degrees.append(tmp)
-            a_building_height.append(rec[i]['BLDGHEIGHT']+rec[i]['GROUNDELEV'])
-            a_building_low.append(rec[i]['GROUNDELEV'])
+            a_building_height.append(rec[i]['BLDGHEIGHT']*0.3048+ground_elev) ## converting feet to meters
+            a_building_low.append(ground_elev-0) ## send walls below the ground
             a_building_id.append(rec[i]['DRCOGID'])
-            # if (len(a_building_id)> 10500):
-            #     break
     del sf
     del shapes
     del rec
@@ -171,10 +270,9 @@ def main():
     print("building lower left is {}".format(building_lower_left))
     print("building upper right is {}".format(building_upper_right))
 
-    ## chosen lower left base my 0m, 0m orientation on 
-    lower_left = np.array([-105.27368, 40.00707])
-    ## in format CRS.from_epsg(32613)
-    ## bottom 4428577.785411156, left 476641.151340244
+    ## chosen lower left base my 0m, 0m orientation on   
+    lower_left = np.array([common_0_long_lat[0], common_0_long_lat[1]])
+
 
     # vertex_count and building_count 
     vc = 0
@@ -191,8 +289,8 @@ def main():
         xx = []
         yy = []
         print("building height is ", a_building_height[i])
-        building_high = a_building_height[i] * 0.3048 ## convert from feet to meters
-        building_low = a_building_low[i] * 0.3048 ## convert from feet to meters
+        building_high = a_building_height[i]
+        building_low = a_building_low[i]
         v_list = []
         f_list = []
         building_vc = 0

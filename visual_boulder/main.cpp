@@ -22,9 +22,10 @@
 // #include "worlds/three_marbles_worship.h"
 // #include "worlds/boulder_creek.h"
 // #include "worlds/summer_region_20m.h"
-// #include "worlds/hellems.h"
-#include "worlds/hellems_ed.h"
-#include "worlds/hellems_arap.h"
+#include "worlds/hellems.h"
+// #include "worlds/hellems_ed.h"
+#include "worlds/new_hellems_arap.h"
+// #include "worlds/boulder_creek_5m.h"
 
 #include <iostream>
 #include <string>
@@ -158,22 +159,22 @@ int main()
     {
         case 0:
             // for generating an image
-            world = hellems_arap(); 
+            world = new_hellems_arap(); 
             // aspect_ratio = 16.0 / 9.0;
             aspect_ratio = 12.0 / 9.0;
-            image_width = 200;
+            image_width = 400;
             image_height = static_cast<int>(image_width / aspect_ratio);
-            samples_per_pixel = 25;
+            samples_per_pixel = 8;
             max_depth = 15;
             // overhead view from south
             background = color(176.0/256, 203.0/256, 247.0/256);
-
+            
             // hellems
-            lookfrom = point3(-20,1690,-20);
-            lookat = point3(15,1650,15);
+            lookfrom = point3(100,1680,115);
+            lookat = point3(125,1663,115);
             // arapaho
-            // lookfrom = point3(833,1635,633);
-            // lookat = point3(800,1618,600);
+            // lookfrom = point3(970,1617,750);
+            // lookat = point3(940,1618,720);
             vfov = 56.0;
             
             antenna_lookfrom = lookfrom;
@@ -183,7 +184,7 @@ int main()
             
         case 1:
             // for rf modeling
-            world = hellems_ed(); 
+            world = hellems(); 
             aspect_ratio = 16.0 / 9.0;
             image_width = 250;
             image_height = static_cast<int>(image_width / aspect_ratio);
