@@ -1,4 +1,4 @@
-filename = "new_hellems_arap.obj"
+filename = "full_summer.obj"
 file = open(filename, "r")
 faces = []
 vert_strings = []

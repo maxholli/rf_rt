@@ -3,7 +3,7 @@ import rasterio
 ## band1[0][0] is the north east corner of the image
 
 
-dataset = rasterio.open('/home/jovyan/shared/max/rf_rt/helper_files/boulder_campus/terrain/new_hellems_arap_25m.tin.tif')
+dataset = rasterio.open('/home/jovyan/shared/max/rf_rt/helper_files/boulder_campus/terrain/full_summer_12m.tin.tif')
 band1 = dataset.read(1)
 bb = dataset.bounds
 ## build visual world

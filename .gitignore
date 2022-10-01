@@ -44,6 +44,9 @@ helper_files/*.tin.tif
 helper_files/*.txt
 helper_files/boulder_campus/terrain/*.txt
 helper_files/boulder_campus/terrain/*.tin.tif
+helper_files/boulder_campus/*.txt
+helper_files/boulder_campus/holey_Bs/boulder_bs/*
+visual_boulder/worlds/*.txt
 
 *.shp
 *.cpg

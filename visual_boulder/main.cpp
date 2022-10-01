@@ -24,14 +24,17 @@
 // #include "worlds/summer_region_20m.h"
 #include "worlds/hellems.h"
 // #include "worlds/hellems_ed.h"
-#include "worlds/new_hellems_arap.h"
+// #include "worlds/new_hellems_arap.h"
 // #include "worlds/boulder_creek_5m.h"
+// #include "worlds/full_summer_12m.h"
 
 #include <iostream>
 #include <string>
 #include <chrono>
 #include <sys/time.h>
 #include <ctime>
+#include <fstream>
+#include <regex>
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
@@ -39,6 +42,65 @@ using std::chrono::system_clock;
 // #include <stdlib.h>
 // #include <time.h>
 
+
+int read_world_from_file(hittable_list& world, std::string filename)
+{
+    // ground
+    auto material_s2 = make_shared<lambertian>(color(0.37, 0.37, 0.37));
+
+    // buildings
+    auto material_s1 = make_shared<lambertian>(color(0.7, 0.3, 0.3));
+    
+    std::fstream newfile;
+    newfile.open(filename, std::ios::in); //open a file to perform read operation using file object
+    if (newfile.is_open()) //checking whether the file is open
+    { 
+        std::string tp;
+        int tris_added = 0;
+        while(std::getline(newfile, tp)){ //read data from file object and put it into string.
+            tris_added++;
+            if (tris_added % 1000 == 0)
+                std::cerr << "\rTriangles added: " << tris_added << ' ' << std::flush;
+            // world.add(make_shared<triangle>(point3(-54.106,1652.930,59.441), point3(-56.532,1652.930,62.173), point3(-56.532,1664.818,62.17), material_s1));
+            std::regex str_expr (".*world\\.add.*point3\\((.*),(.*),(.*)\\), point3\\((.*),(.*),(.*)\\), point3\\((.*),(.*),(.*)\\), (.*)\\)\\);.*");
+            std::smatch sm;
+            if (std::regex_match(tp, sm, str_expr))
+            {
+                // std::cout << "we have a match\n";
+                // std::cout << sm.size() << '\n';
+                // std::cout << sm[0] << '\n';
+                // std::cout << sm[1] << '\n';
+                // std::cout << sm[2] << '\n';
+                // std::cout << sm[3] << '\n';
+                // std::cout << sm[4] << '\n';
+                // std::cout << sm[5] << '\n';
+                // std::cout << sm[6] << '\n';
+                // std::cout << sm[7] << '\n';
+                // std::cout << sm[8] << '\n';
+                // std::cout << sm[9] << '\n';
+                // std::cout << sm[10] << '\n';
+                if (sm[10] == "material_s1")
+                {
+                    world.add(make_shared<triangle>(point3(std::stod(sm[1]),std::stod(sm[2]),std::stod(sm[3])), point3(std::stod(sm[4]),std::stod(sm[5]),std::stod(sm[6])), point3(std::stod(sm[7]),std::stod(sm[8]),std::stod(sm[9])), material_s1));
+                } else if (sm[10] == "material_s2")
+                {
+                    world.add(make_shared<triangle>(point3(std::stod(sm[1]),std::stod(sm[2]),std::stod(sm[3])), point3(std::stod(sm[4]),std::stod(sm[5]),std::stod(sm[6])), point3(std::stod(sm[7]),std::stod(sm[8]),std::stod(sm[9])), material_s2));
+                } else 
+                {
+                std::cerr << "ERROR: unknown material "  << sm[10] << '\n';
+                }
+            } 
+            // else {
+            //     std::cerr << "ERROR: THE LINE WASN'T A MATCH" << '\n' << tp << '\n';
+            // }
+            
+            
+        }
+        newfile.close(); //close the file object.
+        std::cerr << "\nWorld built\n";
+    }
+    return 1;
+}
 
 color ray_color(const ray& r, const color& background, const hittable& world, int depth, bounce_hist* ray_history)
 {   
@@ -159,19 +221,26 @@ int main()
     {
         case 0:
             // for generating an image
-            world = new_hellems_arap(); 
+            // world = full_summer_12m(); 
+            
+            read_world_from_file(world, "worlds/full_summer_12m.txt");
+            std::cerr << world.objects.size() << " triangles in the world\n";
+            
             // aspect_ratio = 16.0 / 9.0;
             aspect_ratio = 12.0 / 9.0;
-            image_width = 400;
+            image_width = 200;
             image_height = static_cast<int>(image_width / aspect_ratio);
-            samples_per_pixel = 8;
-            max_depth = 15;
+            samples_per_pixel = 3;
+            max_depth = 10;
             // overhead view from south
             background = color(176.0/256, 203.0/256, 247.0/256);
             
+            lookfrom = point3(100,2050,750);
+            lookat = point3(1000,1663,750);
+            
             // hellems
-            lookfrom = point3(100,1680,115);
-            lookat = point3(125,1663,115);
+            // lookfrom = point3(100,1680,115);
+            // lookat = point3(125,1663,115);
             // arapaho
             // lookfrom = point3(970,1617,750);
             // lookat = point3(940,1618,720);

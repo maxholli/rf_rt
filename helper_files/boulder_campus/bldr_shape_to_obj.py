@@ -233,7 +233,7 @@ def main():
                 a_holey_building.append(False)
             tmp_vertex_degrees.append(tmp)
             a_building_height.append(rec[i]['BLDGHEIGHT']*0.3048+ground_elev) ## converting feet to meters
-            a_building_low.append(ground_elev-0) ## send walls below the ground
+            a_building_low.append(ground_elev-5) ## send walls below the ground
             a_building_id.append(rec[i]['DRCOGID'])
     del sf
     del shapes
